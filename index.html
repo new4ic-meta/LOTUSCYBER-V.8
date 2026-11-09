@@ -388,35 +388,22 @@
                 <div class="text-center space-y-2 max-w-xl mx-auto">
                     <span class="px-3 py-1 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] text-xs font-mono font-semibold border border-[#00d2ff]/30">MODEL PERNIAGAAN SEBENAR & JUJUR</span>
                     <h2 class="text-2xl font-bold text-white heading-font">Pelan Perkhidmatan LotusCyber</h2>
-                    <p class="text-xs text-gray-400">Pelan FREE merangkumi satu imbasan percuma pada peranti ini. Imbasan tambahan dan langganan akan diaktifkan selepas gateway pembayaran sebenar tersedia.</p>
+                    <p class="text-xs text-gray-400">FREE: 1 semakan percuma. Selepas itu, beli fail Single Scan RM11.90 di Payhip; satu fail = satu semakan sahaja.</p>
                 </div>
 
-                <!-- Pricing Cards Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                    
-                    <!-- LotusCyber agreed pricing -->
+                <!-- LotusCyber pricing: FREE + one-use digital access file -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div class="p-5 bg-[#10111a] rounded-xl border border-emerald-500/30 space-y-4">
                         <div class="flex justify-between items-center"><h3 class="text-base font-bold text-white">FREE</h3><span class="text-xs text-emerald-400">RM0</span></div>
-                        <p class="text-xs text-gray-300">1 imbasan percuma pada peranti ini.</p>
-                        <button onclick="setPlan('FREE')" class="w-full py-2.5 bg-[#161824] border border-emerald-500/40 text-emerald-400 font-bold text-xs rounded-xl">Gunakan pelan percuma</button>
+                        <p class="text-xs text-gray-300">1 semakan percuma sahaja untuk peranti ini.</p>
+                        <span class="block text-xs text-emerald-300">Termasuk 1 penggunaan awal.</span>
                     </div>
                     <div class="p-5 bg-[#10111a] rounded-xl border border-amber-500/40 space-y-3">
-                        <h3 class="text-base font-bold text-white">Imbasan Tambahan</h3>
-                        <div class="text-2xl font-bold text-amber-400">RM9.90 <span class="text-xs font-normal text-gray-400">/ imbasan</span></div>
-                        <p class="text-xs text-gray-300">Bayaran sekali untuk satu imbasan tambahan.</p>
-                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
-                    </div>
-                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-3">
-                        <h3 class="text-base font-bold text-white">Langganan Bulanan</h3>
-                        <div class="text-2xl font-bold text-cyan-400">RM39.90 <span class="text-xs font-normal text-gray-400">/ bulan</span></div>
-                        <p class="text-xs text-gray-300">Akses langganan bulanan.</p>
-                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
-                    </div>
-                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-3">
-                        <h3 class="text-base font-bold text-white">Langganan Tahunan</h3>
-                        <div class="text-2xl font-bold text-cyan-400">RM99.00 <span class="text-xs font-normal text-gray-400">/ tahun</span></div>
-                        <p class="text-xs text-gray-300">Akses langganan tahunan.</p>
-                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
+                        <div class="flex justify-between items-center"><h3 class="text-base font-bold text-white">FAIL SINGLE SCAN</h3><span class="text-xs text-amber-300">SEKALI BELI</span></div>
+                        <div class="text-2xl font-bold text-amber-400">RM11.90 <span class="text-xs font-normal text-gray-400">/ fail</span></div>
+                        <p class="text-xs text-gray-300">Beli satu fail akses melalui Payhip. Setiap fail mengandungi satu lesen unik untuk satu semakan sahaja. Selepas digunakan, lesen tamat.</p>
+                        <button onclick="openPayhipProduct()" class="w-full py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl">Dapatkan Fail 1 Semakan</button>
+                        <p class="text-[10px] text-gray-500">PRO dan langganan ditangguhkan.</p>
                     </div>
                 </div>
 
@@ -550,6 +537,8 @@
         };
 
         let currentAnalysisResult = null;
+        // Set this to the public Payhip product URL after the store owner has created the RM11.90 product.
+        const PAYHIP_SINGLE_SCAN_URL = 'PAYHIP_PRODUCT_URL_NOT_CONFIGURED';
 
         // XSS Sanitizer Safe Function
         function escapeHTML(str) {
@@ -628,10 +617,27 @@
                 alert('Sila masukkan atau tampal mesej terlebih dahulu.');
                 return;
             }
-            if (!ownerAuthorized && localStorage.getItem('lotus_free_scan_used') === '1') {
-                alert('Imbasan percuma pada peranti ini telah digunakan. Pembelian imbasan tambahan belum tersedia.');
-                switchTab('pricing');
-                return;
+            let paidLicenseConsumed = false;
+            const freeScanAlreadyUsed = localStorage.getItem('lotus_free_scan_used') === '1';
+            if (!ownerAuthorized && freeScanAlreadyUsed) {
+                const licenseKey = prompt('Imbasan percuma telah digunakan. Masukkan kod lesen unik daripada fail pembelian Payhip (1 kod = 1 semakan):');
+                if (!licenseKey || !licenseKey.trim()) { switchTab('pricing'); return; }
+                try {
+                    const licenseResponse = await fetch('/api/payhip/consume-single-scan', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ licenseKey: licenseKey.trim() })
+                    });
+                    const licenseData = await licenseResponse.json();
+                    if (!licenseResponse.ok || licenseData.status !== 'ok') {
+                        alert(licenseData.message || 'Kod lesen tidak sah, telah digunakan, atau pengesahan Payhip belum dikonfigurasi.');
+                        return;
+                    }
+                    paidLicenseConsumed = true;
+                } catch (error) {
+                    alert('Tidak dapat menghubungi pelayan untuk mengesahkan fail akses. Cuba lagi kemudian.');
+                    return;
+                }
             }
 
             let totalScore = 0;
@@ -750,7 +756,6 @@
             safetyAdvice.innerHTML = adviceList.map(adv => `<p>${adv}</p>`).join('');
 
             resultSection.classList.remove('hidden');
-            updateExportButtonsUI();
             lucide.createIcons();
 
             currentAnalysisResult = {
@@ -783,7 +788,6 @@
             }
             updatePlanBadgeUI();
             updateOwnerButtonUI();
-            updateExportButtonsUI();
             return appState.isOwner;
         }
 
@@ -798,7 +802,6 @@
                 sessionStorage.removeItem('lotus_owner_token');
                 updatePlanBadgeUI();
                 updateOwnerButtonUI();
-                updateExportButtonsUI();
                 alert('Anda telah log keluar daripada mod OWNER.');
                 return;
             }
@@ -820,8 +823,7 @@
                 sessionStorage.setItem('lotus_owner_token', result.token);
                 updatePlanBadgeUI();
                 updateOwnerButtonUI();
-                updateExportButtonsUI();
-                alert('Mod OWNER aktif. Imbasan tanpa had dan eksport PDF/JSON telah dibuka.');
+                alert('Mod OWNER aktif. Imbasan tanpa had telah dibuka.');
             } catch (error) {
                 alert('Tidak dapat menghubungi server LotusCyber. Cuba lagi apabila sambungan stabil.');
             }
@@ -952,8 +954,16 @@
             updateExportButtonsUI();
         }
 
+        function openPayhipProduct() {
+            if (!PAYHIP_SINGLE_SCAN_URL || PAYHIP_SINGLE_SCAN_URL === 'PAYHIP_PRODUCT_URL_NOT_CONFIGURED') {
+                alert('Pautan produk Payhip belum dipasang. Produk RM11.90 dan pautan kedai perlu disediakan dahulu.');
+                return;
+            }
+            window.open(PAYHIP_SINGLE_SCAN_URL, '_blank', 'noopener,noreferrer');
+        }
+
         function paymentNotReady() {
-            alert('Pembayaran LotusCyber belum diaktifkan. Jangan buat sebarang bayaran sehingga penyedia pembayaran dan sistem akaun disahkan serta diuji.');
+            alert('Pelan ini ditangguhkan. LotusCyber hanya menawarkan FREE dan fail Single Scan RM11.90.');
         }
 
         function updatePlanBadgeUI() {
@@ -978,7 +988,7 @@
             const container = document.getElementById('pro-export-container');
             if (!container) return;
 
-            if (appState.isOwner || appState.activePlan === 'PRO' || appState.activePlan === 'ENTERPRISE') {
+            if (appState.activePlan === 'PRO' || appState.activePlan === 'ENTERPRISE') {
                 container.innerHTML = `
                     <button onclick="exportReport('pdf')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-xs text-amber-300 hover:text-white transition flex items-center gap-1.5">
                         <i data-lucide="file-text" class="w-3.5 h-3.5 text-amber-400"></i> Eksport PDF Rasmi (PRO)
@@ -997,8 +1007,8 @@
             lucide.createIcons();
         }
 
-        // Payment remains disabled until verified payment callbacks and account provisioning are implemented.
-        async function initiatePayment() { paymentNotReady(); }
+        // Payhip checkout is opened through the configured product URL. License use is verified server-side.
+        async function initiatePayment() { openPayhipProduct(); }
 
         // Functional PDF Export (jsPDF Client-Side Engine)
         function exportReport(format) {
