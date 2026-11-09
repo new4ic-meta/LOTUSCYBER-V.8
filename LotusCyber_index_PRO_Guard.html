@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#08080c">
+    <meta name="description" content="LotusCyber - Pengesan Scam & Panduan Keselamatan Siber Malaysia dengan satu imbasan percuma pada peranti.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>LotusCyber - Pengesan Scam & Keselamatan Siber</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        black: '#08080c',
+                        dark: '#10111a',
+                        card: '#161824',
+                        border: '#232738',
+                        blue: '#00d2ff',
+                        gold: '#ffd700'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts, Lucide Icons & jsPDF CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #08080c;
+            color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .heading-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .glass-card {
+            background: rgba(22, 24, 36, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #232738;
+        }
+        .safe-pb {
+            padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+        }
+        .safe-pt {
+            padding-top: env(safe-area-inset-top, 0.5rem);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #08080c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232738;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00d2ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 glass-card border-b border-[#232738]/80 px-4 py-3 sm:px-6 safe-pt">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('scanner')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00d2ff] via-cyan-500 to-blue-600 flex items-center justify-center text-black font-bold shadow-lg shadow-cyan-500/20">
+                    <i data-lucide="shield-check" class="w-6 h-6 stroke-[2.5]"></i>
+                </div>
+                <div>
+                    <h1 class="heading-font text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+                        LOTUS<span class="text-[#00d2ff]">CYBER</span>
+                        <span id="nav-plan-badge" class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-mono uppercase">FREE</span>
+                    </h1>
+                    <p class="text-[10px] text-gray-400 font-mono tracking-wider uppercase">Pengesan Scam & Keselamatan Siber</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="owner-login-button" onclick="loginOwner()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition text-xs font-semibold" title="Log masuk OWNER">OWNER</button>
+                <button onclick="toggleModal('info-modal')" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition text-xs font-semibold flex items-center gap-1.5" title="Talian Kecemasan NSRC 997">
+                    <i data-lucide="phone-call" class="w-4 h-4 text-red-400"></i>
+                    <span class="hidden sm:inline">NSRC 997</span>
+                </button>
+                <button onclick="switchTab('pricing')" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-300 hover:border-amber-400 transition text-xs font-semibold flex items-center gap-1.5">
+                    <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
+                    <span class="hidden sm:inline">Pelan Lesen</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <nav class="bg-[#10111a] border-b border-[#232738] sticky top-[61px] z-30 px-4 py-2">
+        <div class="max-w-4xl mx-auto flex items-center justify-between overflow-x-auto gap-2 text-xs">
+            <button id="tab-btn-scanner" onclick="switchTab('scanner')" class="px-3.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/30">
+                <i data-lucide="scan" class="w-3.5 h-3.5"></i> Semakan Scam
+            </button>
+            <button id="tab-btn-guide" onclick="switchTab('guide')" class="px-3.5 py-1.5 rounded-lg text-gray-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Panduan Siber
+            </button>
+            <button id="tab-btn-semakmule" onclick="switchTab('semakmule')" class="px-3.5 py-1.5 rounded-lg text-gray-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i> PDRM Semak Mule
+            </button>
+            <button id="tab-btn-history" onclick="switchTab('history')" class="px-3.5 py-1.5 rounded-lg text-gray-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="history" class="w-3.5 h-3.5"></i> Sejarah
+            </button>
+            <button id="tab-btn-pricing" onclick="switchTab('pricing')" class="px-3.5 py-1.5 rounded-lg text-gray-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i> Pelan & Pricing
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-grow space-y-6">
+
+        <!-- Banner Info - Guarantee -->
+        <div class="rounded-2xl p-4 bg-gradient-to-r from-[#10111a] via-[#161824] to-[#10111a] border border-[#232738] relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-[#00d2ff]/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3">
+                    <div class="p-2.5 bg-[#00d2ff]/10 rounded-xl text-[#00d2ff] mt-0.5 border border-[#00d2ff]/20">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm font-semibold text-white">Semakan Mesej & Pautan Scam</h2>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-mono px-2 py-0.5 rounded border border-emerald-500/30">1 IMBASAN PERCUMA</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+                            Tampal mesej SMS, WhatsApp, atau URL mencurigakan. Sistem imbasan heuristik siber tempatan mengesan penipuan TAC/OTP, APK haram, pautan phishing, dan scam pelaburan dengan satu imbasan percuma pada peranti ini. Penilaian adalah heuristik dan bukan pengesahan mutlak.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 1: SCANNER TAB -->
+        <div id="view-scanner" class="space-y-6">
+            <!-- Analyzer Card -->
+            <section class="glass-card rounded-2xl p-5 sm:p-6 shadow-xl border border-[#232738] relative">
+                <div class="flex justify-between items-center mb-3">
+                    <label for="message-input" class="text-sm font-medium text-gray-200 flex items-center gap-2">
+                        <i data-lucide="message-square-code" class="w-4 h-4 text-[#00d2ff]"></i>
+                        Tampal Teks Mesej / Pautan URL:
+                    </label>
+                    <button onclick="clearInput()" class="text-xs text-gray-400 hover:text-red-400 transition flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Kosongkan
+                    </button>
+                </div>
+
+                <textarea id="message-input" rows="5" 
+                    class="w-full bg-[#08080c] border border-[#232738] rounded-xl p-3.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#00d2ff] focus:ring-1 focus:ring-[#00d2ff] transition-all"
+                    placeholder="Contoh 1: RM0 MAYBANK: Akaun anda disekat. Sila kemaskini di http://maybank2u-sec-update.com sekarang...&#10;Contoh 2: Tahniah! Anda menang dividen RM45,000. Muat turun fail aplikasi ini: http://secure-app.top/apk/dividend.apk"></textarea>
+
+                <!-- Quick Test Samples -->
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-gray-400 font-medium">Uji Sampel Mesej:</span>
+                    <button onclick="loadSample('tac')" class="px-2.5 py-1 rounded-lg bg-[#10111a] border border-[#232738] text-[11px] text-gray-300 hover:border-[#00d2ff]/50 hover:text-[#00d2ff] transition">
+                        📌 TAC Scam
+                    </button>
+                    <button onclick="loadSample('parcel')" class="px-2.5 py-1 rounded-lg bg-[#10111a] border border-[#232738] text-[11px] text-gray-300 hover:border-[#00d2ff]/50 hover:text-[#00d2ff] transition">
+                        📦 PosLaju / Courier
+                    </button>
+                    <button onclick="loadSample('apk')" class="px-2.5 py-1 rounded-lg bg-[#10111a] border border-[#232738] text-[11px] text-gray-300 hover:border-[#00d2ff]/50 hover:text-[#00d2ff] transition">
+                        📱 Fail APK Haram
+                    </button>
+                    <button onclick="loadSample('bank_official')" class="px-2.5 py-1 rounded-lg bg-[#10111a] border border-[#232738] text-[11px] text-gray-300 hover:border-[#00d2ff]/50 hover:text-[#00d2ff] transition">
+                        🏦 Bank Rasmi (Sah)
+                    </button>
+                </div>
+
+                <!-- Action Button -->
+                <button id="analyze-btn" onclick="analyzeMessage()" 
+                    class="w-full mt-5 py-3.5 px-4 rounded-xl bg-[#00d2ff] text-black font-bold text-sm tracking-wide hover:bg-cyan-400 active:scale-[0.99] transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
+                    <i data-lucide="scan" class="w-4 h-4"></i>
+                    IMBAS MESEJ & PAUTAN SEKARANG
+                </button>
+            </section>
+
+            <!-- Result Box (Hidden by default) -->
+            <section id="result-section" class="hidden glass-card rounded-2xl p-5 sm:p-6 border border-[#232738] transition-all">
+                <div class="flex items-center justify-between pb-4 border-b border-[#232738]">
+                    <div class="flex items-center gap-3">
+                        <div id="risk-badge-icon" class="w-12 h-12 rounded-xl flex items-center justify-center text-white"></div>
+                        <div>
+                            <span class="text-xs font-mono uppercase tracking-wider text-gray-400">Keputusan Semakan</span>
+                            <h3 id="risk-level-text" class="text-lg font-bold">---</h3>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-gray-400 block font-mono">Skor Indikator Ancaman</span>
+                        <span id="threat-score" class="text-xl font-bold font-mono text-[#00d2ff]">0%</span>
+                    </div>
+                </div>
+
+                <!-- Analysis Details -->
+                <div class="mt-4 space-y-4">
+                    <div>
+                        <h4 class="text-xs font-semibold uppercase text-gray-400 tracking-wider mb-2 flex items-center gap-1.5">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-[#00d2ff]"></i> Indikator & Sebab Penilaian Mencurigakan:
+                        </h4>
+                        <ul id="indicators-list" class="space-y-1.5 text-xs text-gray-300"></ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-semibold uppercase text-gray-400 tracking-wider mb-2 flex items-center gap-1.5">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i> Nasihat Keselamatan & Tindakan:
+                        </h4>
+                        <div id="safety-advice" class="p-3 bg-[#10111a] rounded-xl border border-[#232738] text-xs text-gray-300 space-y-1"></div>
+                    </div>
+
+                    <!-- Transparent Heuristic Engine Disclaimer -->
+                    <p class="text-[10px] text-gray-400 bg-[#10111a] p-2.5 rounded-lg border border-[#232738]/60 italic leading-relaxed">
+                        💡 <strong>Penafian Penilaian Heuristik:</strong> Keputusan ini dianalisis secara 100% tempatan menggunakan algoritma heuristik siber (padanan kata kunci penipuan Malaysia, pengesahan domain hostname rasmi, dan pattern APK). Ini bukan pengesahan keselamatan mutlak. Sila sentiasa sahkan dengan pihak berkuasa atau bank anda.
+                    </p>
+
+                    <!-- PRO Exports Container -->
+                    <div class="pt-2 flex flex-wrap gap-2 items-center justify-between border-t border-[#232738]">
+                        <div id="pro-export-container" class="flex gap-2">
+                            <!-- Dynamic Export Buttons -->
+                        </div>
+                        <button onclick="switchTab('semakmule')" class="text-xs text-[#00d2ff] hover:underline flex items-center gap-1">
+                            Semak Nombor/Akaun di Semak Mule <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Community Local Report Log -->
+            <section class="glass-card rounded-2xl p-5 border border-[#232738]">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4 text-[#00d2ff]"></i>
+                        Simpan Laporan Ancaman Peranti (Local Threat Log)
+                    </h3>
+                    <span class="text-[10px] text-gray-400 font-mono bg-[#10111a] px-2 py-0.5 rounded border border-[#232738]">Peranti Tempatan</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Form -->
+                    <div class="bg-[#10111a] p-3.5 rounded-xl border border-[#232738] space-y-2.5">
+                        <span class="text-xs font-medium text-gray-300 block">Laporkan Nombor / URL Scam Baharu:</span>
+                        <input type="text" id="report-source" placeholder="Nombor Telefon / Pautan URL (cth: 011-xxxxxxx)" class="w-full bg-[#08080c] border border-[#232738] rounded-lg p-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#00d2ff]">
+                        <select id="report-type" class="w-full bg-[#08080c] border border-[#232738] rounded-lg p-2 text-xs text-gray-300 focus:outline-none focus:border-[#00d2ff]">
+                            <option value="WhatsApp Scam">WhatsApp Scam</option>
+                            <option value="SMS Phishing">SMS Phishing</option>
+                            <option value="Pautan APK Haram">Pautan APK Haram</option>
+                            <option value="Pelaburan Palsu">Pelaburan Palsu</option>
+                        </select>
+                        <button onclick="submitReport()" class="w-full py-2 bg-[#161824] hover:bg-[#232738] border border-[#232738] text-[#00d2ff] font-medium text-xs rounded-lg transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Simpan Ke Peranti
+                        </button>
+                    </div>
+
+                    <!-- Display Feed -->
+                    <div class="bg-[#10111a] p-3.5 rounded-xl border border-[#232738] flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-medium text-gray-300">Laporan Disimpan:</span>
+                                <button onclick="clearCommunityFeed()" class="text-[10px] text-red-400 hover:underline">Padam Semua</button>
+                            </div>
+                            <div id="community-feed-list" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW 2: CYBERSECURITY GUIDE TAB -->
+        <div id="view-guide" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 border border-[#232738] space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-[#00d2ff]/10 rounded-xl text-[#00d2ff]">
+                        <i data-lucide="book-open" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-white">Panduan Keselamatan Siber Malaysia</h2>
+                        <p class="text-xs text-gray-400">Langkah-langkah praktikal elak menjadi mangsa penipuan digital.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div class="bg-[#10111a] p-4 rounded-xl border border-[#232738] space-y-2">
+                        <span class="text-xs font-bold text-[#00d2ff] uppercase font-mono">01. TAC / OTP Banking</span>
+                        <h3 class="text-sm font-semibold text-white">Prinsip Kerahsiaan Kata Laluan</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Pihak bank tidak pernah meminta kod TAC/OTP melalui panggilan telefon, SMS, atau WhatsApp. Jangan sesekali menyerahkan kod 6 digit ini kepada sesiapa.
+                        </p>
+                    </div>
+
+                    <div class="bg-[#10111a] p-4 rounded-xl border border-[#232738] space-y-2">
+                        <span class="text-xs font-bold text-[#00d2ff] uppercase font-mono">02. Bahaya Fail APK</span>
+                        <h3 class="text-sm font-semibold text-white">Jangan Muat Turun Aplikasi Luar</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Penipu sering menghantar fail `.apk` berharga murah (contoh: servis pembersihan rumah). Fail ini mengandungi malware pencuri SMS perbankan anda. Hanya muat turun dari Google Play Store & Apple App Store.
+                        </p>
+                    </div>
+
+                    <div class="bg-[#10111a] p-4 rounded-xl border border-[#232738] space-y-2">
+                        <span class="text-xs font-bold text-[#00d2ff] uppercase font-mono">03. Macau Scam / Panggilan Palsu</span>
+                        <h3 class="text-sm font-semibold text-white">Samaran PDRM, LHDN & Mahkamah</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Pihak berkuasa Malaysia tidak memindahkan panggilan telefon terus ke balai polis atau meminta pindahan wang kecemasan ke akaun peribadi. Letakkan panggilan serta-merta!
+                        </p>
+                    </div>
+
+                    <div class="bg-[#10111a] p-4 rounded-xl border border-[#232738] space-y-2">
+                        <span class="text-xs font-bold text-[#00d2ff] uppercase font-mono">04. Parcel & Courier Phishing</span>
+                        <h3 class="text-sm font-semibold text-white">Pengesahan Pautan Kurier</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Pastikan alamat pautan adalah domain rasmi syarikat kurier (contoh: `pos.com.my`). Elakkan menekan domain mencurigakan seperti `.top` atau `.xyz`.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: PDRM SEMAK MULE TAB -->
+        <div id="view-semakmule" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 border border-[#232738] space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-cyan-500/10 rounded-xl text-[#00d2ff]">
+                        <i data-lucide="external-link" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-white">Portal Semak Mule PDRM</h2>
+                        <p class="text-xs text-gray-400">Semak nombor akaun bank atau nombor telefon suspek secara rasmi di pangkalan data Polis Diraja Malaysia.</p>
+                    </div>
+                </div>
+
+                <div class="bg-[#10111a] p-4 rounded-xl border border-[#232738] space-y-3">
+                    <p class="text-xs text-gray-300 leading-relaxed">
+                        Jabatan Siasatan Jenayah Komersil (JSJK) PDRM menyediakan perkhidmatan rasmi untuk orang awam menyemak sama ada sesuatu akaun bank atau nombor telefon pernah dilaporkan mendaftar kes scam.
+                    </p>
+                    
+                    <div class="pt-2">
+                        <a href="https://semakmule.rmp.gov.my/" target="_blank" rel="noopener noreferrer" 
+                            class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#00d2ff] text-black font-bold text-xs hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">
+                            <span>Buka Portal Rasmi PDRM Semak Mule</span>
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="text-[11px] text-gray-400 bg-[#10111a] p-3 rounded-xl border border-[#232738]">
+                    📌 <strong>Peringatan Keselamatan:</strong> LotusCyber tidak menyimpan data perbankan anda. Pautan di atas membawa anda terus ke laman sesawang rasmi Jabatan Siasatan Jenayah Komersil PDRM (`semakmule.rmp.gov.my`).
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: HISTORY TAB -->
+        <div id="view-history" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-5 border border-[#232738]">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4 text-[#00d2ff]"></i>
+                        Sejarah Semakan Terkini (Maksimum 5 Log Peranti)
+                    </h3>
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:underline">Padam Sejarah</button>
+                </div>
+                <div id="history-container" class="space-y-2">
+                    <p class="text-xs text-gray-400 italic">Tiada sejarah semakan disimpan.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 5: PRICING & PAYMENT TAB -->
+        <div id="view-pricing" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 border border-[#232738] space-y-6">
+                <div class="text-center space-y-2 max-w-xl mx-auto">
+                    <span class="px-3 py-1 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] text-xs font-mono font-semibold border border-[#00d2ff]/30">MODEL PERNIAGAAN SEBENAR & JUJUR</span>
+                    <h2 class="text-2xl font-bold text-white heading-font">Pelan Perkhidmatan LotusCyber</h2>
+                    <p class="text-xs text-gray-400">Pelan FREE merangkumi satu imbasan percuma pada peranti ini. Imbasan tambahan dan langganan akan diaktifkan selepas gateway pembayaran sebenar tersedia.</p>
+                </div>
+
+                <!-- Pricing Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    
+                    <!-- LotusCyber agreed pricing -->
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-emerald-500/30 space-y-4">
+                        <div class="flex justify-between items-center"><h3 class="text-base font-bold text-white">FREE</h3><span class="text-xs text-emerald-400">RM0</span></div>
+                        <p class="text-xs text-gray-300">1 imbasan percuma pada peranti ini.</p>
+                        <button onclick="setPlan('FREE')" class="w-full py-2.5 bg-[#161824] border border-emerald-500/40 text-emerald-400 font-bold text-xs rounded-xl">Gunakan pelan percuma</button>
+                    </div>
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-amber-500/40 space-y-3">
+                        <h3 class="text-base font-bold text-white">Imbasan Tambahan</h3>
+                        <div class="text-2xl font-bold text-amber-400">RM9.90 <span class="text-xs font-normal text-gray-400">/ imbasan</span></div>
+                        <p class="text-xs text-gray-300">Bayaran sekali untuk satu imbasan tambahan.</p>
+                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
+                    </div>
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-3">
+                        <h3 class="text-base font-bold text-white">Langganan Bulanan</h3>
+                        <div class="text-2xl font-bold text-cyan-400">RM39.90 <span class="text-xs font-normal text-gray-400">/ bulan</span></div>
+                        <p class="text-xs text-gray-300">Akses langganan bulanan.</p>
+                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
+                    </div>
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-3">
+                        <h3 class="text-base font-bold text-white">Langganan Tahunan</h3>
+                        <div class="text-2xl font-bold text-cyan-400">RM99.00 <span class="text-xs font-normal text-gray-400">/ tahun</span></div>
+                        <p class="text-xs text-gray-300">Akses langganan tahunan.</p>
+                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
+                    </div>
+                </div>
+
+                <!-- API Key Section for Enterprise Developers -->
+                <div class="pt-4 border-t border-[#232738] space-y-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i data-lucide="code" class="w-4 h-4 text-[#00d2ff]"></i> Integrasi REST API (Belum Diaktifkan)
+                    </h3>
+                    <p class="text-xs text-gray-400">Endpoint contoh di bawah belum dibuka untuk pelanggan. Kunci API dan pengesahan pelanggan hanya akan diaktifkan selepas sistem pengeluaran siap diuji.</p>
+                    
+                    <div class="bg-[#08080c] p-3.5 rounded-xl border border-[#232738] font-mono text-[11px] text-gray-300 space-y-2 overflow-x-auto">
+                        <div class="text-emerald-400 font-bold">POST /api/v1/scan</div>
+                        <div class="text-gray-400">Header: Content-Type: application/json | X-Lotus-API-Key: YOUR_ISSUED_API_KEY</div>
+                        <pre class="text-cyan-300">{
+  "message": "RM0 MAYBANK: Akaun disekat. Sila kemaskini di http://maybank2u-sec-update.com"
+}</pre>
+                        <div class="text-gray-400">// Status sebenar endpoint sekarang (HTTP 503):</div>
+                        <pre class="text-amber-300">{
+  "status": "unavailable",
+  "message": "Enterprise API belum diaktifkan."
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-card border-t border-[#232738] mt-8 py-6 px-4 text-center safe-pb">
+        <p class="text-xs text-gray-400">
+            &copy; 2026 <strong class="text-white">LotusCyber</strong>. Hak Cipta Terpelihara.
+        </p>
+        <p class="text-xs text-[#00d2ff] font-bold tracking-wider mt-3">
+            🛡️ MEMBINA PERISAI DIGITAL UNTUK MASA DEPAN.
+        </p>
+        <p class="text-[10px] text-gray-300 mt-2 leading-relaxed">
+            Melindungi komuniti, meningkatkan kesedaran dan memperkukuh keselamatan digital Malaysia.
+        </p>
+        <p class="text-[10px] text-gray-400 mt-2">
+            Teknologi Pintar. Kesedaran Siber. Perlindungan Bersama.
+        </p>
+        <p class="text-[10px] text-gray-400 mt-1">
+            🇲🇾 Dibangunkan dengan semangat untuk Malaysia.
+        </p>
+        <p class="text-xs text-white font-bold tracking-wider mt-3">
+            LOTUSCYBER — BIJAK DIGITAL. WASPADA TANPA SEMPADAN.
+        </p>
+    </footer>
+
+    <!-- Hotline NSRC Modal -->
+    <div id="info-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-[#232738] space-y-4 relative">
+            <button onclick="toggleModal('info-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center">
+                    <i data-lucide="phone-call" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white">Pusat Respons Scam Kebangsaan</h3>
+                    <p class="text-xs text-gray-400">National Scam Response Centre (NSRC)</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-300 leading-relaxed">
+                Jika anda baru sahaja menjadi mangsa penipuan pindahan wang atau terperdaya memberikan maklumat akaun bank:
+            </p>
+
+            <div class="bg-[#10111a] p-3.5 rounded-xl border border-red-500/30 text-center">
+                <span class="text-xs text-gray-400 block">Talian Kecemasan Scam Malaysia</span>
+                <a href="tel:997" class="text-2xl font-bold font-mono text-red-400 hover:underline">997</a>
+                <span class="text-[10px] text-gray-400 block mt-1">(Operasi: 8.00 pagi - 8.00 malam setiap hari)</span>
+            </div>
+
+            <div class="text-xs text-gray-400 space-y-1.5">
+                <p><strong>Langkah Penting Selepas Scam:</strong></p>
+                <ol class="list-decimal list-inside space-y-1 text-gray-300">
+                    <li>Dail 997 dengan kadar segera untuk sekat transaksi keluar.</li>
+                    <li>Hubungi bank anda untuk aktifkan <em>Kill Switch</em> akaun.</li>
+                    <li>Buat laporan polis rasmi di balai terdekat.</li>
+                </ol>
+            </div>
+
+            <button onclick="toggleModal('info-modal')" class="w-full py-2.5 bg-[#161824] border border-[#232738] text-gray-300 text-xs font-semibold rounded-xl hover:text-white">
+                Tutup Window
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Engine Script -->
+    <script>
+        // Data Sampel Mesej Ujian
+        const SAMPLES = {
+            tac: "RM0.00 MAYBANK: Kod TAC anda ialah 849201 untuk pemindahan RM1,500.00 ke akaun LEE W.C. Jangan kongsikan kod ini kepada sesiapa!",
+            parcel: "RM0 PosLaju: Barang anda MY948201948MY tidak dapat dihantar kerana alamat tidak lengkap. Kemaskini di http://poslaju-semak-my.top/update",
+            apk: "Tahniah! Anda terpilih menerima bantuan e-Wallet RM500. Sila muat turun fail aplikasi khas untuk tuntut: http://secure-bantuan.xyz/app/bantuan.apk",
+            bank_official: "RM0 MAYBANK: Pemindahan RM 150.00 dari akaun anda berjaya dilakukan pada 24/10 14:20. Jika ini bukan anda, sila hubungi talian di belakang kad bank anda."
+        };
+
+        // Algoritma Heuristik Penipuan Siber Malaysia
+        const SCAM_PATTERNS = [
+            { pattern: /bit\.ly|tinyurl\.com|t\.me|cutt\.ly|is\.gd|goo\.gl|\.top|\.xyz|\.click|\.online/i, score: 35, label: "Penggunaan pemendek pautan (URL Shortener) atau domain berisiko tinggi (.top, .xyz)" },
+            { pattern: /\.apk|\.exe|download-app/i, score: 45, label: "Cubaan muat turun fail aplikasi luar stor rasmi (APK / Malware)" },
+            { pattern: /akaun anda (telah disekat|dibatalkan|tergantung|dibekukan)/i, score: 25, label: "Tektik amaran akaun disekat / nakut-nakutkan mangsa" },
+            { pattern: /tuntut (hadiah|sedekah|pelaburan|dividen|bantuan|wang)/i, score: 20, label: "Umpan ganjaran wang, dividen atau bantuan percuma" },
+            { pattern: /kemaskini (maklumat|sekarang|butiran)/i, score: 15, label: "Desakan kemas kini maklumat peribadi segera" }
+        ];
+
+        // TAC/OTP mention alone is not evidence of a scam. Only requests to disclose a code raise risk.
+        const TAC_OTP_MENTION = /\b(?:kod\s*)?(?:tac|otp)\b|\b(?:tac|otp)\s*(?:anda|code|kod)\b/i;
+        const TAC_OTP_DISCLOSURE_REQUEST = /(?:\b(?:berikan|hantar(?:kan)?|serahkan|kongsi(?:kan)?|maklumkan)\b.{0,35}\b(?:kod\s*)?(?:tac|otp)\b|\b(?:kod\s*)?(?:tac|otp)\b.{0,35}\b(?:berikan|hantar(?:kan)?|serahkan|kongsi(?:kan)?|maklumkan)\b)/i;
+
+        // List Domain Bank & Kurier Rasmi Malaysia (Hostnames)
+        const OFFICIAL_HOSTNAMES = [
+            "maybank2u.com.my", 
+            "cimbclicks.com.my", 
+            "rhbgroup.com", 
+            "publicbank.com.my", 
+            "hlb.com.my", 
+            "pos.com.my"
+        ];
+
+        // App State
+        let appState = {
+            activePlan: 'FREE',
+            isOwner: false,
+            ownerToken: sessionStorage.getItem('lotus_owner_token') || ''
+        };
+
+        let currentAnalysisResult = null;
+
+        // XSS Sanitizer Safe Function
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[&<>"']/g, function(match) {
+                const escapeMap = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                };
+                return escapeMap[match];
+            });
+        }
+
+        // DOM Ready Init
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadSavedPlan();
+            restoreOwnerSession();
+            loadHistoryDisplay();
+            loadCommunityFeedDisplay();
+            updateExportButtonsUI();
+
+            // PWA Service Worker Registration
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+                    .catch(err => console.log('SW Registration error:', err));
+            }
+        });
+
+        // Tab Navigation Router
+        function switchTab(tabKey) {
+            const tabs = ['scanner', 'guide', 'semakmule', 'history', 'pricing'];
+            tabs.forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-gray-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap";
+                }
+            });
+
+            const activeView = document.getElementById(`view-${tabKey}`);
+            const activeBtn = document.getElementById(`tab-btn-${tabKey}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) {
+                activeBtn.className = "px-3.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 whitespace-nowrap bg-[#00d2ff]/10 text-[#00d2ff] border border-[#00d2ff]/30";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function loadSample(key) {
+            if (SAMPLES[key]) {
+                document.getElementById('message-input').value = SAMPLES[key];
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('message-input').value = '';
+            document.getElementById('result-section').classList.add('hidden');
+        }
+
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.toggle('hidden');
+        }
+
+        // Owner scans are unlimited only while a valid server-issued OWNER token is active.
+        async function analyzeMessage() {
+            const ownerAuthorized = await verifyOwnerSession();
+            const text = document.getElementById('message-input').value.trim();
+            if (!text) {
+                alert('Sila masukkan atau tampal mesej terlebih dahulu.');
+                return;
+            }
+            if (!ownerAuthorized && localStorage.getItem('lotus_free_scan_used') === '1') {
+                alert('Imbasan percuma pada peranti ini telah digunakan. Pembelian imbasan tambahan belum tersedia.');
+                switchTab('pricing');
+                return;
+            }
+
+            let totalScore = 0;
+            let triggeredIndicators = [];
+
+            // 1. Strict Hostname Domain Verification
+            const urlRegex = /(https?:\/\/[^\s]+)/gi;
+            const extractedUrls = text.match(urlRegex) || [];
+
+            extractedUrls.forEach(urlStr => {
+                try {
+                    const parsedUrl = new URL(urlStr);
+                    const hostname = parsedUrl.hostname.toLowerCase();
+
+                    let isOfficial = false;
+                    OFFICIAL_HOSTNAMES.forEach(official => {
+                        if (hostname === official || hostname.endsWith('.' + official)) {
+                            isOfficial = true;
+                        }
+                    });
+
+                    if (!isOfficial) {
+                        totalScore += 40;
+                        triggeredIndicators.push(`Pautan dikesan bukan domain rasmi berdaftar: ${escapeHTML(hostname)}`);
+                    }
+                } catch(e) {
+                    totalScore += 25;
+                    triggeredIndicators.push(`Format URL tidak sah atau mencurigakan: ${escapeHTML(urlStr)}`);
+                }
+            });
+
+            // 2. Pattern Matching Rules
+            SCAM_PATTERNS.forEach(item => {
+                if (item.pattern.test(text)) {
+                    totalScore += item.score;
+                    if (!triggeredIndicators.includes(item.label)) {
+                        triggeredIndicators.push(item.label);
+                    }
+                }
+            });
+
+            // A normal bank TAC/OTP notification is not automatically a scam.
+            // Remove explicit "jangan kongsi..." warnings before checking for disclosure requests.
+            const disclosureCheckText = text.replace(
+                /jangan\s+(?:sekali-kali\s+)?(?:kongsi(?:kan)?|berikan|hantar(?:kan)?|serahkan)[^.!?\n]{0,50}/gi,
+                ' '
+            );
+            if (TAC_OTP_DISCLOSURE_REQUEST.test(disclosureCheckText)) {
+                totalScore += 40;
+                triggeredIndicators.push("Mesej meminta kod TAC/OTP diberikan atau dihantar kepada pihak lain");
+            }
+
+            const scorePercentage = Math.min(totalScore, 100);
+
+            // Risk Assessment Classification
+            let riskLevel = "RENDAH";
+            let colorClass = "emerald";
+            let badgeBg = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+            let iconName = "shield-check";
+            let adviceList = [];
+
+            if (scorePercentage >= 60) {
+                riskLevel = "TINGGI";
+                colorClass = "red";
+                badgeBg = "bg-red-500/20 text-red-400 border border-red-500/30";
+                iconName = "shield-alert";
+                adviceList = [
+                    "❌ <strong>JANGAN KLIK</strong> sebarang pautan di dalam mesej ini.",
+                    "❌ Jangan muat turun fail APK atau memberikan kod TAC/OTP anda.",
+                    "📞 Jika melibatkan akaun bank, hubungi talian di belakang kad ATM anda atau talian kecemasan NSRC 997."
+                ];
+            } else if (scorePercentage >= 30) {
+                riskLevel = "SEDERHANA";
+                colorClass = "amber";
+                badgeBg = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                iconName = "alert-triangle";
+                adviceList = [
+                    "⚠️ Mesej mempunyai indikator mencurigakan.",
+                    "🔍 Sahkan maklumat terus melalui portal rasmi syarikat atau aplikasi rasmi.",
+                    "🚫 Jauhi pindahan wang ke akaun bank pihak ketiga yang tidak disahkan."
+                ];
+            } else {
+                adviceList = [
+                    "✅ Tiada indikator ancaman scam utama dikesan.",
+                    "💡 Sentiasa kekal waspada apabila menerima mesej daripada nombor tidak dikenali."
+                ];
+            }
+
+            if (TAC_OTP_MENTION.test(text)) {
+                adviceList.push(
+                    "🔐 <strong>PERINGATAN TAC/OTP:</strong> Jangan kongsi kod ini dengan sesiapa, termasuk individu yang mengaku pegawai bank.",
+                    "🏦 Jika butiran transaksi tidak dikenali atau anda diminta menyerahkan kod, hentikan urusan dan hubungi bank melalui nombor rasmi."
+                );
+            }
+
+            if (triggeredIndicators.length === 0) {
+                triggeredIndicators.push("Tiada kata kunci ancaman atau pautan berbahaya ditemui.");
+            }
+
+            // Render Output
+            const resultSection = document.getElementById('result-section');
+            const riskBadgeIcon = document.getElementById('risk-badge-icon');
+            const riskLevelText = document.getElementById('risk-level-text');
+            const threatScoreText = document.getElementById('threat-score');
+            const indicatorsList = document.getElementById('indicators-list');
+            const safetyAdvice = document.getElementById('safety-advice');
+
+            riskBadgeIcon.className = `w-12 h-12 rounded-xl flex items-center justify-center ${badgeBg}`;
+            riskBadgeIcon.innerHTML = `<i data-lucide="${iconName}" class="w-6 h-6"></i>`;
+            
+            riskLevelText.innerText = `RISIKO ${riskLevel}`;
+            riskLevelText.className = `text-lg font-bold text-${colorClass}-400`;
+            threatScoreText.innerText = `${scorePercentage}%`;
+
+            indicatorsList.innerHTML = triggeredIndicators.map(ind => `<li class="flex items-start gap-1.5"><span class="text-[#00d2ff] font-bold">•</span> ${ind}</li>`).join('');
+            safetyAdvice.innerHTML = adviceList.map(adv => `<p>${adv}</p>`).join('');
+
+            resultSection.classList.remove('hidden');
+            lucide.createIcons();
+
+            currentAnalysisResult = {
+                timestamp: new Date().toLocaleString('ms-MY'),
+                riskLevel: riskLevel,
+                threatScore: scorePercentage,
+                indicators: triggeredIndicators,
+                messageText: text
+            };
+
+            saveToHistory(currentAnalysisResult);
+            if (!ownerAuthorized) localStorage.setItem('lotus_free_scan_used', '1');
+        }
+
+        // OWNER authentication: passphrase is checked by the backend and never embedded in this page.
+        async function verifyOwnerSession() {
+            if (!appState.ownerToken) return false;
+            try {
+                const response = await fetch('/api/owner/status', {
+                    headers: { Authorization: `Bearer ${appState.ownerToken}` },
+                    cache: 'no-store'
+                });
+                appState.isOwner = response.ok;
+                if (!response.ok) {
+                    appState.ownerToken = '';
+                    sessionStorage.removeItem('lotus_owner_token');
+                }
+            } catch (error) {
+                appState.isOwner = false;
+            }
+            updatePlanBadgeUI();
+            updateOwnerButtonUI();
+            updateExportButtonsUI();
+            return appState.isOwner;
+        }
+
+        async function restoreOwnerSession() {
+            await verifyOwnerSession();
+        }
+
+        async function loginOwner() {
+            if (appState.isOwner) {
+                appState.ownerToken = '';
+                appState.isOwner = false;
+                sessionStorage.removeItem('lotus_owner_token');
+                updatePlanBadgeUI();
+                updateOwnerButtonUI();
+                updateExportButtonsUI();
+                alert('Anda telah log keluar daripada mod OWNER.');
+                return;
+            }
+            const passphrase = prompt('Masukkan kata laluan OWNER LotusCyber:');
+            if (!passphrase) return;
+            try {
+                const response = await fetch('/api/owner/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ passphrase })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.token) {
+                    alert(result.message || 'Log masuk OWNER gagal.');
+                    return;
+                }
+                appState.ownerToken = result.token;
+                appState.isOwner = true;
+                sessionStorage.setItem('lotus_owner_token', result.token);
+                updatePlanBadgeUI();
+                updateOwnerButtonUI();
+                updateExportButtonsUI();
+                alert('Mod OWNER aktif. Imbasan tanpa had telah dibuka.');
+            } catch (error) {
+                alert('Tidak dapat menghubungi server LotusCyber. Cuba lagi apabila sambungan stabil.');
+            }
+        }
+
+        function updateOwnerButtonUI() {
+            const button = document.getElementById('owner-login-button');
+            if (!button) return;
+            button.textContent = appState.isOwner ? 'OWNER ✓' : 'OWNER';
+            button.title = appState.isOwner ? 'Log keluar OWNER' : 'Log masuk OWNER';
+            button.className = appState.isOwner
+                ? 'p-2 sm:px-3 sm:py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 transition text-xs font-semibold'
+                : 'p-2 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition text-xs font-semibold';
+        }
+
+        // Storage Management
+        function saveToHistory(item) {
+            try {
+                let history = JSON.parse(localStorage.getItem('lotus_history') || '[]');
+                if (!Array.isArray(history)) history = [];
+                history.unshift(item);
+                if (history.length > 5) history.pop();
+                localStorage.setItem('lotus_history', JSON.stringify(history));
+                loadHistoryDisplay();
+            } catch(e) { console.error(e); }
+        }
+
+        function loadHistoryDisplay() {
+            const container = document.getElementById('history-container');
+            try {
+                let history = JSON.parse(localStorage.getItem('lotus_history') || '[]');
+                if (!Array.isArray(history) || history.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-gray-400 italic">Tiada sejarah semakan disimpan.</p>`;
+                    return;
+                }
+
+                container.innerHTML = history.map(h => {
+                    let badgeColor = h.riskLevel === 'TINGGI' ? 'text-red-400 border-red-500/30 bg-red-500/10' : (h.riskLevel === 'SEDERHANA' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10');
+                    return `
+                        <div class="p-3 bg-[#10111a] rounded-xl border border-[#232738] flex justify-between items-center text-xs">
+                            <div class="truncate max-w-[70%]">
+                                <span class="text-gray-400 font-mono text-[10px] block">${escapeHTML(h.timestamp)}</span>
+                                <p class="text-gray-200 truncate mt-0.5">${escapeHTML(h.messageText)}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-md border font-semibold text-[10px] ${badgeColor}">
+                                ${escapeHTML(h.riskLevel)} (${escapeHTML(String(h.threatScore))}%)
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            } catch(e) {
+                container.innerHTML = `<p class="text-xs text-gray-400 italic">Gagal membaca sejarah.</p>`;
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('Padam sejarah semakan peranti ini?')) {
+                localStorage.removeItem('lotus_history');
+                loadHistoryDisplay();
+            }
+        }
+
+        // Community Threat Logging
+        function submitReport() {
+            const source = document.getElementById('report-source').value.trim();
+            const type = document.getElementById('report-type').value;
+
+            if (!source) {
+                alert('Sila masukkan nombor telefon atau pautan URL.');
+                return;
+            }
+
+            try {
+                let feed = JSON.parse(localStorage.getItem('lotus_community_feed') || '[]');
+                if (!Array.isArray(feed)) feed = [];
+                feed.unshift({
+                    source: source,
+                    type: type,
+                    date: new Date().toLocaleDateString('ms-MY')
+                });
+                localStorage.setItem('lotus_community_feed', JSON.stringify(feed));
+                document.getElementById('report-source').value = '';
+                loadCommunityFeedDisplay();
+            } catch(e) { console.error(e); }
+        }
+
+        function loadCommunityFeedDisplay() {
+            const list = document.getElementById('community-feed-list');
+            try {
+                let feed = JSON.parse(localStorage.getItem('lotus_community_feed') || '[]');
+                if (!Array.isArray(feed) || feed.length === 0) {
+                    list.innerHTML = `<p class="text-[11px] text-gray-400 italic">Tiada laporan disimpan pada peranti ini.</p>`;
+                    return;
+                }
+
+                list.innerHTML = feed.map(item => `
+                    <div class="p-2 rounded bg-[#08080c] border border-[#232738] text-[11px] flex justify-between items-center">
+                        <div>
+                            <span class="text-white font-mono block">${escapeHTML(item.source)}</span>
+                            <span class="text-gray-400 text-[9px]">${escapeHTML(item.type)} <span class="text-amber-400">[Belum Disahkan]</span></span>
+                        </div>
+                        <span class="text-[#00d2ff] font-mono text-[9px]">${escapeHTML(item.date)}</span>
+                    </div>
+                `).join('');
+            } catch(e) {
+                list.innerHTML = `<p class="text-[11px] text-gray-400 italic">Tiada data laporan.</p>`;
+            }
+        }
+
+        function clearCommunityFeed() {
+            if (confirm('Padam laporan peranti?')) {
+                localStorage.removeItem('lotus_community_feed');
+                loadCommunityFeedDisplay();
+            }
+        }
+
+        // Plan Logic & PRO/ENTERPRISE Verification
+        function loadSavedPlan() {
+            appState.activePlan = 'FREE';
+            localStorage.removeItem('lotus_active_plan');
+            updatePlanBadgeUI();
+        }
+
+        function setPlan(planName) {
+            appState.activePlan = 'FREE';
+            localStorage.removeItem('lotus_active_plan');
+            updatePlanBadgeUI();
+            updateExportButtonsUI();
+        }
+
+        function paymentNotReady() {
+            alert('Pembayaran LotusCyber belum diaktifkan. Jangan buat sebarang bayaran sehingga pengesahan ToyyibPay dan sistem akaun siap diuji.');
+        }
+
+        function updatePlanBadgeUI() {
+            const badge = document.getElementById('nav-plan-badge');
+            if (badge) {
+                badge.innerText = appState.isOwner ? 'OWNER' : appState.activePlan;
+                if (appState.isOwner) {
+                    badge.className = 'text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono font-bold uppercase';
+                    return;
+                }
+                if (appState.activePlan === 'PRO') {
+                    badge.className = "text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono font-bold uppercase";
+                } else if (appState.activePlan === 'ENTERPRISE') {
+                    badge.className = "text-[9px] bg-[#00d2ff]/20 text-[#00d2ff] border border-[#00d2ff]/40 px-1.5 py-0.5 rounded font-mono font-bold uppercase";
+                } else {
+                    badge.className = "text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded font-mono uppercase";
+                }
+            }
+        }
+
+        function updateExportButtonsUI() {
+            const container = document.getElementById('pro-export-container');
+            if (!container) return;
+
+            if (appState.isOwner || appState.activePlan === 'PRO' || appState.activePlan === 'ENTERPRISE') {
+                container.innerHTML = `
+                    <button onclick="exportReport('pdf')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-xs text-amber-300 hover:text-white transition flex items-center gap-1.5">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-amber-400"></i> Eksport PDF Rasmi (PRO)
+                    </button>
+                    <button onclick="exportReport('json')" class="px-3 py-1.5 rounded-lg bg-[#10111a] border border-[#232738] text-xs text-gray-300 hover:text-white hover:border-[#00d2ff]/50 transition flex items-center gap-1.5">
+                        <i data-lucide="code" class="w-3.5 h-3.5 text-[#00d2ff]"></i> Eksport JSON (PRO)
+                    </button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="switchTab('pricing')" class="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition flex items-center gap-1.5">
+                        <i data-lucide="lock" class="w-3.5 h-3.5"></i> Buka Kunci Eksport PDF & JSON (Pelan PRO)
+                    </button>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // Payment remains disabled until verified ToyyibPay callback and account provisioning are implemented.
+        async function initiatePayment() { paymentNotReady(); }
+
+        // Functional PDF Export (jsPDF Client-Side Engine)
+        function exportReport(format) {
+            if (!currentAnalysisResult) {
+                alert('Sila jalankan imbasan terlebih dahulu sebelum eksport.');
+                return;
+            }
+
+            if (!appState.isOwner && appState.activePlan !== 'PRO' && appState.activePlan !== 'ENTERPRISE') {
+                alert('Eksport PDF dan JSON dikunci untuk pelan PRO. Pembayaran dan pengaktifan PRO belum tersedia.');
+                switchTab('pricing');
+                return;
+            }
+
+            if (format === 'pdf') {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+
+                    doc.setFillColor(8, 8, 12);
+                    doc.rect(0, 0, 210, 297, "F");
+
+                    doc.setTextColor(0, 210, 255);
+                    doc.setFontSize(22);
+                    doc.text("LOTUSCYBER MALAYSIA", 20, 25);
+
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(14);
+                    doc.text("Laporan Analisis Keselamatan Siber", 20, 35);
+
+                    doc.setDrawColor(35, 39, 56);
+                    doc.line(20, 42, 190, 42);
+
+                    doc.setFontSize(10);
+                    doc.setTextColor(180, 180, 180);
+                    doc.text(`Tarikh Semakan: ${currentAnalysisResult.timestamp}`, 20, 52);
+                    doc.text(`Tahap Risiko  : RISIKO ${currentAnalysisResult.riskLevel}`, 20, 60);
+                    doc.text(`Skor Ancaman  : ${currentAnalysisResult.threatScore}%`, 20, 68);
+
+                    doc.setTextColor(0, 210, 255);
+                    doc.text("Teks Mesej Diimbas:", 20, 80);
+                    doc.setTextColor(220, 220, 220);
+                    const splitMsg = doc.splitTextToSize(currentAnalysisResult.messageText, 170);
+                    doc.text(splitMsg, 20, 88);
+
+                    let startY = 88 + (splitMsg.length * 6) + 10;
+                    doc.setTextColor(0, 210, 255);
+                    doc.text("Indikator Penipuan Dikesan:", 20, startY);
+
+                    doc.setTextColor(220, 220, 220);
+                    currentAnalysisResult.indicators.forEach((ind, i) => {
+                        startY += 8;
+                        doc.text(`- ${ind}`, 25, startY);
+                    });
+
+                    startY += 20;
+                    doc.setFontSize(8);
+                    doc.setTextColor(120, 120, 120);
+                    doc.text("Dijana secara sah oleh LotusCyber Pro Client-Side Engine.", 20, startY);
+
+                    doc.save(`LotusCyber_Laporan_${Date.now()}.pdf`);
+                } catch(err) {
+                    alert('Gagal menjana PDF: ' + err.message);
+                }
+            } else if (format === 'json') {
+                const fileContent = JSON.stringify(currentAnalysisResult, null, 2);
+                const blob = new Blob([fileContent], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `LotusCyber_Data_${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+    </script>
+</body>
+</html>
