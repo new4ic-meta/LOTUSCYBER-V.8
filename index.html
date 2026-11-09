@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#08080c">
-    <meta name="description" content="LotusCyber - Pengesan Scam & Panduan Keselamatan Siber Malaysia (100% Percuma Tanpa Had Semakan Asas).">
+    <meta name="description" content="LotusCyber - Pengesan Scam & Panduan Keselamatan Siber Malaysia dengan satu imbasan percuma pada peranti.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
@@ -94,6 +94,7 @@
             </div>
             
             <div class="flex items-center gap-2">
+                <button id="owner-login-button" onclick="loginOwner()" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition text-xs font-semibold" title="Log masuk OWNER">OWNER</button>
                 <button onclick="toggleModal('info-modal')" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition text-xs font-semibold flex items-center gap-1.5" title="Talian Kecemasan NSRC 997">
                     <i data-lucide="phone-call" class="w-4 h-4 text-red-400"></i>
                     <span class="hidden sm:inline">NSRC 997</span>
@@ -387,7 +388,7 @@
                 <div class="text-center space-y-2 max-w-xl mx-auto">
                     <span class="px-3 py-1 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] text-xs font-mono font-semibold border border-[#00d2ff]/30">MODEL PERNIAGAAN SEBENAR & JUJUR</span>
                     <h2 class="text-2xl font-bold text-white heading-font">Pelan Perkhidmatan LotusCyber</h2>
-                    <p class="text-xs text-gray-400">Semakan asas kekal percuma tanpa had untuk seluruh rakyat Malaysia. Pelan PRO & Enterprise disahkan melalui gateway pembayaran sebenar (ToyyibPay/Billplz).</p>
+                    <p class="text-xs text-gray-400">Pelan FREE merangkumi satu imbasan percuma pada peranti ini. Imbasan tambahan dan langganan akan diaktifkan selepas gateway pembayaran sebenar tersedia.</p>
                 </div>
 
                 <!-- Pricing Cards Grid -->
@@ -401,7 +402,7 @@
                     </div>
                     <div class="p-5 bg-[#10111a] rounded-xl border border-amber-500/40 space-y-3">
                         <h3 class="text-base font-bold text-white">Imbasan Tambahan</h3>
-                        <div class="text-2xl font-bold text-amber-400">RM10.90 <span class="text-xs font-normal text-gray-400">/ imbasan</span></div>
+                        <div class="text-2xl font-bold text-amber-400">RM9.90 <span class="text-xs font-normal text-gray-400">/ imbasan</span></div>
                         <p class="text-xs text-gray-300">Bayaran sekali untuk satu imbasan tambahan.</p>
                         <button onclick="paymentNotReady()" class="w-full py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
                     </div>
@@ -449,12 +450,24 @@
     </main>
 
     <!-- Footer -->
-    <footer class="glass-card border-t border-[#232738] mt-8 py-4 px-4 text-center safe-pb">
+    <footer class="glass-card border-t border-[#232738] mt-8 py-6 px-4 text-center safe-pb">
         <p class="text-xs text-gray-400">
             &copy; 2026 <strong class="text-white">LotusCyber</strong>. Hak Cipta Terpelihara.
         </p>
+        <p class="text-xs text-[#00d2ff] font-bold tracking-wider mt-3">
+            🛡️ MEMBINA PERISAI DIGITAL UNTUK MASA DEPAN.
+        </p>
+        <p class="text-[10px] text-gray-300 mt-2 leading-relaxed">
+            Melindungi komuniti, meningkatkan kesedaran dan memperkukuh keselamatan digital Malaysia.
+        </p>
+        <p class="text-[10px] text-gray-400 mt-2">
+            Teknologi Pintar. Kesedaran Siber. Perlindungan Bersama.
+        </p>
         <p class="text-[10px] text-gray-400 mt-1">
-            Dibina untuk perlindungan keselamatan siber komuniti Malaysia.
+            🇲🇾 Dibangunkan dengan semangat untuk Malaysia.
+        </p>
+        <p class="text-xs text-white font-bold tracking-wider mt-3">
+            LOTUSCYBER — BIJAK DIGITAL. WASPADA TANPA SEMPADAN.
         </p>
     </footer>
 
@@ -532,7 +545,9 @@
 
         // App State
         let appState = {
-            activePlan: 'FREE'
+            activePlan: 'FREE',
+            isOwner: false,
+            ownerToken: sessionStorage.getItem('lotus_owner_token') || ''
         };
 
         let currentAnalysisResult = null;
@@ -556,6 +571,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             loadSavedPlan();
+            restoreOwnerSession();
             loadHistoryDisplay();
             loadCommunityFeedDisplay();
             updateExportButtonsUI();
@@ -605,14 +621,15 @@
             if (modal) modal.classList.toggle('hidden');
         }
 
-        // Core Free Unlimited Analysis Engine
-        function analyzeMessage() {
+        // Owner scans are unlimited only while a valid server-issued OWNER token is active.
+        async function analyzeMessage() {
+            const ownerAuthorized = await verifyOwnerSession();
             const text = document.getElementById('message-input').value.trim();
             if (!text) {
                 alert('Sila masukkan atau tampal mesej terlebih dahulu.');
                 return;
             }
-            if (localStorage.getItem('lotus_free_scan_used') === '1') {
+            if (!ownerAuthorized && localStorage.getItem('lotus_free_scan_used') === '1') {
                 alert('Imbasan percuma pada peranti ini telah digunakan. Pembelian imbasan tambahan belum tersedia.');
                 switchTab('pricing');
                 return;
@@ -727,7 +744,76 @@
             };
 
             saveToHistory(currentAnalysisResult);
-            localStorage.setItem('lotus_free_scan_used', '1');
+            if (!ownerAuthorized) localStorage.setItem('lotus_free_scan_used', '1');
+        }
+
+        // OWNER authentication: passphrase is checked by the backend and never embedded in this page.
+        async function verifyOwnerSession() {
+            if (!appState.ownerToken) return false;
+            try {
+                const response = await fetch('/api/owner/status', {
+                    headers: { Authorization: `Bearer ${appState.ownerToken}` },
+                    cache: 'no-store'
+                });
+                appState.isOwner = response.ok;
+                if (!response.ok) {
+                    appState.ownerToken = '';
+                    sessionStorage.removeItem('lotus_owner_token');
+                }
+            } catch (error) {
+                appState.isOwner = false;
+            }
+            updatePlanBadgeUI();
+            updateOwnerButtonUI();
+            return appState.isOwner;
+        }
+
+        async function restoreOwnerSession() {
+            await verifyOwnerSession();
+        }
+
+        async function loginOwner() {
+            if (appState.isOwner) {
+                appState.ownerToken = '';
+                appState.isOwner = false;
+                sessionStorage.removeItem('lotus_owner_token');
+                updatePlanBadgeUI();
+                updateOwnerButtonUI();
+                alert('Anda telah log keluar daripada mod OWNER.');
+                return;
+            }
+            const passphrase = prompt('Masukkan kata laluan OWNER LotusCyber:');
+            if (!passphrase) return;
+            try {
+                const response = await fetch('/api/owner/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ passphrase })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.token) {
+                    alert(result.message || 'Log masuk OWNER gagal.');
+                    return;
+                }
+                appState.ownerToken = result.token;
+                appState.isOwner = true;
+                sessionStorage.setItem('lotus_owner_token', result.token);
+                updatePlanBadgeUI();
+                updateOwnerButtonUI();
+                alert('Mod OWNER aktif. Imbasan tanpa had telah dibuka.');
+            } catch (error) {
+                alert('Tidak dapat menghubungi server LotusCyber. Cuba lagi apabila sambungan stabil.');
+            }
+        }
+
+        function updateOwnerButtonUI() {
+            const button = document.getElementById('owner-login-button');
+            if (!button) return;
+            button.textContent = appState.isOwner ? 'OWNER ✓' : 'OWNER';
+            button.title = appState.isOwner ? 'Log keluar OWNER' : 'Log masuk OWNER';
+            button.className = appState.isOwner
+                ? 'p-2 sm:px-3 sm:py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 transition text-xs font-semibold'
+                : 'p-2 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition text-xs font-semibold';
         }
 
         // Storage Management
@@ -852,7 +938,11 @@
         function updatePlanBadgeUI() {
             const badge = document.getElementById('nav-plan-badge');
             if (badge) {
-                badge.innerText = appState.activePlan;
+                badge.innerText = appState.isOwner ? 'OWNER' : appState.activePlan;
+                if (appState.isOwner) {
+                    badge.className = 'text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono font-bold uppercase';
+                    return;
+                }
                 if (appState.activePlan === 'PRO') {
                     badge.className = "text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded font-mono font-bold uppercase";
                 } else if (appState.activePlan === 'ENTERPRISE') {

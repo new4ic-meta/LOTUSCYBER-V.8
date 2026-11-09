@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 
 app.disable('x-powered-by');
@@ -11,6 +12,65 @@ const ROOT = __dirname;
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'LotusCyber API', payments: 'not_configured', accountProvisioning: 'not_configured' });
+});
+
+// OWNER access is protected by a Render environment variable; never store the passphrase in source code.
+const ownerPassphrase = process.env.OWNER_PASSPHRASE || '';
+const ownerTokenSecret = ownerPassphrase
+  ? crypto.createHash('sha256').update(`LotusCyber OWNER token:${ownerPassphrase}`).digest()
+  : null;
+const ownerLoginAttempts = new Map();
+
+function signOwnerToken(payload) {
+  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', ownerTokenSecret).update(encoded).digest('base64url');
+  return `${encoded}.${signature}`;
+}
+
+function verifyOwnerToken(token) {
+  if (!ownerTokenSecret || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  const expected = crypto.createHmac('sha256', ownerTokenSecret).update(parts[0]).digest();
+  let supplied;
+  try { supplied = Buffer.from(parts[1], 'base64url'); } catch { return false; }
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return false;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+    return payload.sub === 'owner' && Number.isFinite(payload.exp) && payload.exp > Date.now();
+  } catch { return false; }
+}
+
+function isOwnerRequest(req) {
+  const authorization = req.get('authorization') || '';
+  return authorization.startsWith('Bearer ') && verifyOwnerToken(authorization.slice(7));
+}
+
+app.post('/api/owner/login', (req, res) => {
+  if (!ownerPassphrase) {
+    return res.status(503).json({ status: 'unavailable', message: 'Akses OWNER belum dikonfigurasi. Tetapkan OWNER_PASSPHRASE dalam Render Environment Variables.' });
+  }
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const attempt = ownerLoginAttempts.get(ip) || { count: 0, resetAt: now + 15 * 60 * 1000 };
+  if (attempt.resetAt <= now) { attempt.count = 0; attempt.resetAt = now + 15 * 60 * 1000; }
+  if (attempt.count >= 5) return res.status(429).json({ status: 'error', message: 'Terlalu banyak percubaan. Cuba lagi selepas 15 minit.' });
+
+  const suppliedHash = crypto.createHash('sha256').update(String(req.body?.passphrase || '')).digest();
+  const expectedHash = crypto.createHash('sha256').update(ownerPassphrase).digest();
+  if (!crypto.timingSafeEqual(suppliedHash, expectedHash)) {
+    attempt.count += 1;
+    ownerLoginAttempts.set(ip, attempt);
+    return res.status(401).json({ status: 'error', message: 'Kata laluan OWNER tidak tepat.' });
+  }
+  ownerLoginAttempts.delete(ip);
+  const token = signOwnerToken({ sub: 'owner', exp: now + 12 * 60 * 60 * 1000 });
+  return res.json({ status: 'ok', token, expires_in: 43200 });
+});
+
+app.get('/api/owner/status', (req, res) => {
+  if (!isOwnerRequest(req)) return res.status(401).json({ status: 'unauthorized' });
+  return res.json({ status: 'ok', role: 'OWNER', unlimited_scans: true });
 });
 
 // Fail closed: do not create bills until verified callback handling and persistent account activation exist.
