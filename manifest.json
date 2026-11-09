@@ -1,25 +1,25 @@
 {
-“name”: “LotusCyber - Pengesan Scam & Keselamatan Siber”,
-“short_name”: “LotusCyber”,
-“start_url”: “/”,
-“display”: “standalone”,
-“background_color”: “#08080c”,
-“theme_color”: “#00d2ff”,
-“orientation”: “portrait”,
-“description”: “Aplikasi Pengesan Scam & Panduan Keselamatan Siber Malaysia”,
-“icons”: [
-{
-“src”: “/icon-192.png”,
-“sizes”: “192x192”,
-“type”: “image/png”,
-“purpose”: “any”
-},
-{
-“src”: “/icon-512.png”,
-“sizes”: “512x512”,
-“type”: “image/png”,
-“purpose”: “any”
-}
-],
-“scope”: “/”
+  "name": "LotusCyber - Pengesan Scam & Keselamatan Siber",
+  "short_name": "LotusCyber",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08080c",
+  "theme_color": "#00d2ff",
+  "orientation": "portrait",
+  "description": "Aplikasi Pengesan Scam & Panduan Keselamatan Siber Malaysia",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "scope": "/"
 }
