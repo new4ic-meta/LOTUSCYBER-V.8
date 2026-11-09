@@ -750,6 +750,7 @@
             safetyAdvice.innerHTML = adviceList.map(adv => `<p>${adv}</p>`).join('');
 
             resultSection.classList.remove('hidden');
+            updateExportButtonsUI();
             lucide.createIcons();
 
             currentAnalysisResult = {
@@ -782,6 +783,7 @@
             }
             updatePlanBadgeUI();
             updateOwnerButtonUI();
+            updateExportButtonsUI();
             return appState.isOwner;
         }
 
@@ -796,6 +798,7 @@
                 sessionStorage.removeItem('lotus_owner_token');
                 updatePlanBadgeUI();
                 updateOwnerButtonUI();
+                updateExportButtonsUI();
                 alert('Anda telah log keluar daripada mod OWNER.');
                 return;
             }
@@ -817,7 +820,8 @@
                 sessionStorage.setItem('lotus_owner_token', result.token);
                 updatePlanBadgeUI();
                 updateOwnerButtonUI();
-                alert('Mod OWNER aktif. Imbasan tanpa had telah dibuka.');
+                updateExportButtonsUI();
+                alert('Mod OWNER aktif. Imbasan tanpa had dan eksport PDF/JSON telah dibuka.');
             } catch (error) {
                 alert('Tidak dapat menghubungi server LotusCyber. Cuba lagi apabila sambungan stabil.');
             }
@@ -949,7 +953,7 @@
         }
 
         function paymentNotReady() {
-            alert('Pembayaran LotusCyber belum diaktifkan. Jangan buat sebarang bayaran sehingga pengesahan ToyyibPay dan sistem akaun siap diuji.');
+            alert('Pembayaran LotusCyber belum diaktifkan. Jangan buat sebarang bayaran sehingga penyedia pembayaran dan sistem akaun disahkan serta diuji.');
         }
 
         function updatePlanBadgeUI() {
@@ -974,7 +978,7 @@
             const container = document.getElementById('pro-export-container');
             if (!container) return;
 
-            if (appState.activePlan === 'PRO' || appState.activePlan === 'ENTERPRISE') {
+            if (appState.isOwner || appState.activePlan === 'PRO' || appState.activePlan === 'ENTERPRISE') {
                 container.innerHTML = `
                     <button onclick="exportReport('pdf')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-xs text-amber-300 hover:text-white transition flex items-center gap-1.5">
                         <i data-lucide="file-text" class="w-3.5 h-3.5 text-amber-400"></i> Eksport PDF Rasmi (PRO)
@@ -993,7 +997,7 @@
             lucide.createIcons();
         }
 
-        // Payment remains disabled until verified ToyyibPay callback and account provisioning are implemented.
+        // Payment remains disabled until verified payment callbacks and account provisioning are implemented.
         async function initiatePayment() { paymentNotReady(); }
 
         // Functional PDF Export (jsPDF Client-Side Engine)
