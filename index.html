@@ -529,8 +529,8 @@
         ];
 
         // TAC/OTP mention alone is not evidence of a scam. Only requests to disclose a code raise risk.
-        const TAC_OTP_MENTION = /\\b(?:kod\\s*)?(?:tac|otp)\\b|\\b(?:tac|otp)\\s*(?:anda|code|kod)\\b/i;
-        const TAC_OTP_DISCLOSURE_REQUEST = /(?:\\b(?:berikan|hantar(?:kan)?|serahkan|kongsi(?:kan)?|maklumkan)\\b.{0,35}\\b(?:kod\\s*)?(?:tac|otp)\\b|\\b(?:kod\\s*)?(?:tac|otp)\\b.{0,35}\\b(?:berikan|hantar(?:kan)?|serahkan|kongsi(?:kan)?|maklumkan)\\b)/i;
+        const TAC_OTP_MENTION = /\b(?:kod\s*)?(?:tac|otp)\b|\b(?:tac|otp)\s*(?:anda|code|kod)\b/i;
+        const TAC_OTP_DISCLOSURE_REQUEST = /(?:\b(?:berikan|hantar(?:kan)?|serahkan|kongsi(?:kan)?|maklumkan)\b.{0,35}\b(?:kod\s*)?(?:tac|otp)\b|\b(?:kod\s*)?(?:tac|otp)\b.{0,35}\b(?:berikan|hantar(?:kan)?|serahkan|kongsi(?:kan)?|maklumkan)\b)/i;
 
         // List Domain Bank & Kurier Rasmi Malaysia (Hostnames)
         const OFFICIAL_HOSTNAMES = [
@@ -676,7 +676,7 @@
             // A normal bank TAC/OTP notification is not automatically a scam.
             // Remove explicit "jangan kongsi..." warnings before checking for disclosure requests.
             const disclosureCheckText = text.replace(
-                /jangan\\s+(?:sekali-kali\\s+)?(?:kongsi(?:kan)?|berikan|hantar(?:kan)?|serahkan)[^.!?\\n]{0,50}/gi,
+                /jangan\s+(?:sekali-kali\s+)?(?:kongsi(?:kan)?|berikan|hantar(?:kan)?|serahkan)[^.!?\n]{0,50}/gi,
                 ' '
             );
             if (TAC_OTP_DISCLOSURE_REQUEST.test(disclosureCheckText)) {
