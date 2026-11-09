@@ -5,11 +5,13 @@ const crypto = require(‘crypto’);
 const app = express();
 
 app.disable(‘x-powered-by’);
+
 app.use(express.json({ limit: ‘32kb’ }));
 app.use(express.urlencoded({ extended: false, limit: ‘32kb’ }));
 
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = __dirname;
+
 const OWNER_SESSION_DURATION = 12 * 60 * 60 * 1000;
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_WINDOW = 15 * 60 * 1000;
@@ -24,6 +26,7 @@ const ownerTokenSecret = ownerPassphrase
 
 const ownerLoginAttempts = new Map();
 
+// HEALTH CHECK
 app.get(’/api/health’, (_req, res) => {
 res.json({
 status: ‘ok’,
@@ -33,6 +36,7 @@ accountProvisioning: ‘not_configured’
 });
 });
 
+// OWNER TOKEN SECURITY
 function signOwnerToken(payload) {
 const encoded = Buffer
 .from(JSON.stringify(payload))
@@ -52,7 +56,10 @@ return false;
 }
 
 const parts = token.split(’.’);
-if (parts.length !== 2) return false;
+
+if (parts.length !== 2) {
+return false;
+}
 
 const expected = crypto
 .createHmac(‘sha256’, ownerTokenSecret)
@@ -99,6 +106,7 @@ verifyOwnerToken(authorization.slice(7))
 );
 }
 
+// OWNER LOGIN
 app.post(’/api/owner/login’, (req, res) => {
 if (!ownerPassphrase) {
 return res.status(503).json({
@@ -162,6 +170,7 @@ expires_in: OWNER_SESSION_DURATION / 1000
 });
 });
 
+// OWNER STATUS
 app.get(’/api/owner/status’, (req, res) => {
 if (!isOwnerRequest(req)) {
 return res.status(401).json({
@@ -176,6 +185,7 @@ unlimited_scans: true
 });
 });
 
+// PAYMENT - NOT YET ENABLED
 app.post(’/api/create-payment’, (_req, res) => {
 return res.status(503).json({
 status: ‘unavailable’,
@@ -183,6 +193,7 @@ message: ‘Pembayaran belum diaktifkan.’
 });
 });
 
+// ENTERPRISE API - NOT YET ENABLED
 app.post(’/api/v1/scan’, (_req, res) => {
 return res.status(503).json({
 status: ‘unavailable’,
@@ -190,17 +201,19 @@ message: ‘Enterprise API belum diaktifkan.’
 });
 });
 
-// Serve the LotusCyber frontend and static assets.
+// STATIC FRONTEND
 app.use(express.static(ROOT, {
 index: ‘index.html’,
 etag: true,
 maxAge: ‘1h’
 }));
 
+// FRONTEND FALLBACK
 app.get(’*’, (_req, res) => {
 res.sendFile(path.join(ROOT, ‘index.html’));
 });
 
+// START SERVER
 app.listen(PORT, ‘0.0.0.0’, () => {
 console.log(LotusCyber running on port ${PORT});
 });
