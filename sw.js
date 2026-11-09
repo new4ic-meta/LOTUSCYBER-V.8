@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lotuscyber-pwa-v2';
+const CACHE_NAME = 'lotuscyber-pwa-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -29,7 +29,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  if (event.request.method !== 'GET' || new URL(event.request.url).pathname.startsWith('/api/')) return;
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const networked = fetch(event.request)

@@ -1,7 +1,7 @@
 {
   "name": "LotusCyber - Pengesan Scam & Keselamatan Siber",
   "short_name": "LotusCyber",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#08080c",
   "theme_color": "#08080c",
@@ -20,5 +20,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "scope": "/"
 }

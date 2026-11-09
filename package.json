@@ -1,14 +1,16 @@
 {
-  "name": "lotuscyber-backend",
-  "version": "1.0.0",
-  "description": "LotusCyber Production Backend Engine & API Server",
+  "name": "lotuscyber",
+  "version": "1.0.1",
+  "private": true,
+  "description": "LotusCyber scam-awareness web app and API shell",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "node-fetch": "^3.3.2"
+    "express": "^4.21.2"
   }
 }

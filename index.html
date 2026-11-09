@@ -140,11 +140,11 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h2 class="text-sm font-semibold text-white">Semakan Mesej & Pautan Percuma Tanpa Had</h2>
-                            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-mono px-2 py-0.5 rounded border border-emerald-500/30">100% UNLIMITED FREE</span>
+                            <h2 class="text-sm font-semibold text-white">Semakan Mesej & Pautan Scam</h2>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-mono px-2 py-0.5 rounded border border-emerald-500/30">1 IMBASAN PERCUMA</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1 leading-relaxed">
-                            Tampal mesej SMS, WhatsApp, atau URL mencurigakan. Sistem imbasan heuristik siber tempatan mengesan penipuan TAC/OTP, APK haram, pautan pishing, dan scam pelaburan secara percuma tanpa had harian.
+                            Tampal mesej SMS, WhatsApp, atau URL mencurigakan. Sistem imbasan heuristik siber tempatan mengesan penipuan TAC/OTP, APK haram, pautan pishing, dan scam pelaburan dengan satu imbasan percuma pada peranti ini. Penilaian adalah heuristik dan bukan pengesahan mutlak.
                         </p>
                     </div>
                 </div>
@@ -387,34 +387,35 @@
                 <div class="text-center space-y-2 max-w-xl mx-auto">
                     <span class="px-3 py-1 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] text-xs font-mono font-semibold border border-[#00d2ff]/30">MODEL PERNIAGAAN SEBENAR & JUJUR</span>
                     <h2 class="text-2xl font-bold text-white heading-font">Pelan Perkhidmatan LotusCyber</h2>
-                    <p class="text-xs text-gray-400">LotusCyber: 1 semakan percuma. Semakan tambahan RM10.90 setiap satu, atau langganan RM39.90 sebulan / RM99 setahun.</p>
+                    <p class="text-xs text-gray-400">Semakan asas kekal percuma tanpa had untuk seluruh rakyat Malaysia. Pelan PRO & Enterprise disahkan melalui gateway pembayaran sebenar (ToyyibPay/Billplz).</p>
                 </div>
 
                 <!-- Pricing Cards Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                    <div class="p-5 bg-[#10111a] rounded-xl border border-emerald-500/30 space-y-4 flex flex-col justify-between">
-                        <div><h3 class="text-base font-bold text-white">Percuma</h3>
-                        <span class="text-2xl font-bold text-emerald-400 font-mono">RM0</span>
-                        <p class="text-xs text-gray-300 mt-3">1 semakan percuma untuk pengguna baharu.</p></div>
-                        <button onclick="setPlan('FREE')" class="w-full py-2.5 bg-[#161824] border border-emerald-500/40 text-emerald-400 font-bold text-xs rounded-xl">Guna 1 Semakan Percuma</button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    
+                    <!-- LotusCyber agreed pricing -->
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-emerald-500/30 space-y-4">
+                        <div class="flex justify-between items-center"><h3 class="text-base font-bold text-white">FREE</h3><span class="text-xs text-emerald-400">RM0</span></div>
+                        <p class="text-xs text-gray-300">1 imbasan percuma pada peranti ini.</p>
+                        <button onclick="setPlan('FREE')" class="w-full py-2.5 bg-[#161824] border border-emerald-500/40 text-emerald-400 font-bold text-xs rounded-xl">Gunakan pelan percuma</button>
                     </div>
-                    <div class="p-5 bg-[#10111a] rounded-xl border border-amber-500/40 space-y-4 flex flex-col justify-between">
-                        <div><h3 class="text-base font-bold text-white">Semakan Tambahan</h3>
-                        <span class="text-2xl font-bold text-amber-400 font-mono">RM10.90 <span class="text-xs font-normal text-gray-400">/semakan</span></span>
-                        <p class="text-xs text-gray-300 mt-3">Bayaran sekali untuk satu semakan tambahan.</p></div>
-                        <button onclick="initiatePayment('SCAN')" class="w-full py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl">Beli 1 Semakan (RM10.90)</button>
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-amber-500/40 space-y-3">
+                        <h3 class="text-base font-bold text-white">Imbasan Tambahan</h3>
+                        <div class="text-2xl font-bold text-amber-400">RM10.90 <span class="text-xs font-normal text-gray-400">/ imbasan</span></div>
+                        <p class="text-xs text-gray-300">Bayaran sekali untuk satu imbasan tambahan.</p>
+                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-amber-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
                     </div>
-                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-4 flex flex-col justify-between">
-                        <div><h3 class="text-base font-bold text-white">Bulanan</h3>
-                        <span class="text-2xl font-bold text-cyan-400 font-mono">RM39.90 <span class="text-xs font-normal text-gray-400">/bulan</span></span>
-                        <p class="text-xs text-gray-300 mt-3">Langganan bulanan LotusCyber.</p></div>
-                        <button onclick="initiatePayment('MONTHLY')" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Langgan Bulanan</button>
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-3">
+                        <h3 class="text-base font-bold text-white">Langganan Bulanan</h3>
+                        <div class="text-2xl font-bold text-cyan-400">RM39.90 <span class="text-xs font-normal text-gray-400">/ bulan</span></div>
+                        <p class="text-xs text-gray-300">Akses langganan bulanan.</p>
+                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
                     </div>
-                    <div class="p-5 bg-[#10111a] rounded-xl border border-purple-500/40 space-y-4 flex flex-col justify-between">
-                        <div><h3 class="text-base font-bold text-white">Tahunan</h3>
-                        <span class="text-2xl font-bold text-purple-400 font-mono">RM99.00 <span class="text-xs font-normal text-gray-400">/tahun</span></span>
-                        <p class="text-xs text-gray-300 mt-3">Langganan tahunan LotusCyber.</p></div>
-                        <button onclick="initiatePayment('YEARLY')" class="w-full py-2.5 bg-purple-500 text-white font-bold text-xs rounded-xl">Langgan Tahunan</button>
+                    <div class="p-5 bg-[#10111a] rounded-xl border border-cyan-500/40 space-y-3">
+                        <h3 class="text-base font-bold text-white">Langganan Tahunan</h3>
+                        <div class="text-2xl font-bold text-cyan-400">RM99.00 <span class="text-xs font-normal text-gray-400">/ tahun</span></div>
+                        <p class="text-xs text-gray-300">Akses langganan tahunan.</p>
+                        <button onclick="paymentNotReady()" class="w-full py-2.5 bg-cyan-500 text-black font-bold text-xs rounded-xl">Pembayaran belum tersedia</button>
                     </div>
                 </div>
 
@@ -611,6 +612,11 @@
                 alert('Sila masukkan atau tampal mesej terlebih dahulu.');
                 return;
             }
+            if (localStorage.getItem('lotus_free_scan_used') === '1') {
+                alert('Imbasan percuma pada peranti ini telah digunakan. Pembelian imbasan tambahan belum tersedia.');
+                switchTab('pricing');
+                return;
+            }
 
             let totalScore = 0;
             let triggeredIndicators = [];
@@ -721,6 +727,7 @@
             };
 
             saveToHistory(currentAnalysisResult);
+            localStorage.setItem('lotus_free_scan_used', '1');
         }
 
         // Storage Management
@@ -826,16 +833,20 @@
 
         // Plan Logic & PRO/ENTERPRISE Verification
         function loadSavedPlan() {
-            const plan = localStorage.getItem('lotus_active_plan') || 'FREE';
-            appState.activePlan = plan;
+            appState.activePlan = 'FREE';
+            localStorage.removeItem('lotus_active_plan');
             updatePlanBadgeUI();
         }
 
         function setPlan(planName) {
-            appState.activePlan = planName;
-            localStorage.setItem('lotus_active_plan', planName);
+            appState.activePlan = 'FREE';
+            localStorage.removeItem('lotus_active_plan');
             updatePlanBadgeUI();
             updateExportButtonsUI();
+        }
+
+        function paymentNotReady() {
+            alert('Pembayaran LotusCyber belum diaktifkan. Jangan buat sebarang bayaran sehingga pengesahan ToyyibPay dan sistem akaun siap diuji.');
         }
 
         function updatePlanBadgeUI() {
@@ -875,28 +886,8 @@
             lucide.createIcons();
         }
 
-        // Payment Gateway Integration (ToyyibPay Real Connection)
-        async function initiatePayment(plan) {
-            const userEmail = prompt(`Masukkan emel anda untuk pengesahan bil ToyyibPay (${plan}):`);
-            if (!userEmail) return;
-
-            try {
-                const response = await fetch('/api/create-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan: plan, userEmail: userEmail })
-                });
-
-                const data = await response.json();
-                if (data.status === 'success' && data.paymentUrl) {
-                    window.location.href = data.paymentUrl; // Redirect to real gateway payment page
-                } else {
-                    alert(`Notis Gateway Pembayaran: ${data.message || 'Sistem pelayan sedia untuk disambungkan ke akaun ToyyibPay pemilik.'}`);
-                }
-            } catch(e) {
-                alert('Menggunakan Server Tempatan / Single-File Build. Modul Backend Express `server.js` sedia dikonfigurasi untuk gateway ToyyibPay.');
-            }
-        }
+        // Payment remains disabled until verified ToyyibPay callback and account provisioning are implemented.
+        async function initiatePayment() { paymentNotReady(); }
 
         // Functional PDF Export (jsPDF Client-Side Engine)
         function exportReport(format) {
