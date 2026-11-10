@@ -383,30 +383,89 @@
         </div>
 
         <!-- VIEW 5: LOTUSCYBER ACCESS -->
-        <div id="view-pricing" class="hidden space-y-6">
+        <div id="view-pricing" class="space-y-6 hidden">
             <div class="glass-card rounded-2xl p-6 border border-[#232738] space-y-6">
                 <div class="text-center space-y-3 max-w-xl mx-auto">
                     <span class="px-3 py-1 rounded-full bg-[#00d2ff]/10 text-[#00d2ff] text-xs font-mono font-semibold border border-[#00d2ff]/30">LOTUSCYBER ACCESS</span>
-                    <h2 class="text-2xl font-bold text-white heading-font">Nak tambah imbasan?</h2>
-                    <p class="text-sm text-gray-300">Imbasan percuma anda telah digunakan. Dapatkan satu imbasan tambahan melalui kedai rasmi LotusCyber.</p>
+                    <h2 class="text-2xl font-bold text-white heading-font">Imbasan Tambahan (Single Scan)</h2>
+                    <p class="text-sm text-gray-300">Setiap peranti menerima 1 imbasan percuma. Untuk semakan seterusnya, beli kod lesen Payhip rasmi berharga RM9.90 bagi setiap satu imbasan tambahan.</p>
                 </div>
 
+                <!-- Status Baki Kredit Semasa -->
+                <div class="max-w-md mx-auto p-4 bg-[#10111a] rounded-xl border border-[#232738] flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-[#00d2ff]/10 border border-[#00d2ff]/30 flex items-center justify-center text-[#00d2ff]">
+                            <i data-lucide="coins" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-400 block font-mono">Baki Kredit Imbasan Berbayar</span>
+                            <span id="credit-balance-display" class="text-base font-bold text-white font-mono">0 Kredit</span>
+                        </div>
+                    </div>
+                    <button onclick="refreshCreditBalance()" class="text-xs text-gray-400 hover:text-[#00d2ff] p-2" title="Kemaskini Baki">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Tebus Lesen Payhip -->
+                <div class="max-w-md mx-auto p-6 bg-[#10111a] rounded-2xl border border-[#00d2ff]/30 space-y-4">
+                    <div class="flex items-center gap-2 text-white font-bold text-sm">
+                        <i data-lucide="key" class="w-4 h-4 text-[#00d2ff]"></i>
+                        <span>Tebus Kod Lesen Payhip</span>
+                    </div>
+                    <p class="text-xs text-gray-400">
+                        Selepas selesai pembelian di Payhip, masukkan kod lesen perisian anda di bawah untuk menambah kredit imbasan serta-merta.
+                    </p>
+                    <div class="space-y-2">
+                        <input id="payhip-license-input" type="text"
+                            placeholder="Contoh: ABCD-1234-EFGH-5678"
+                            class="w-full bg-[#08080c] border border-[#232738] rounded-xl px-3.5 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-[#00d2ff] font-mono tracking-wider uppercase" />
+                        <button id="redeem-license-btn" onclick="redeemPayhipLicense()"
+                            class="w-full py-3 px-4 rounded-xl bg-[#00d2ff] text-black font-bold text-xs tracking-wider uppercase hover:bg-cyan-400 active:scale-[0.99] transition flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Tebus Lesen & Tambah Kredit
+                        </button>
+                    </div>
+                    <div id="license-redeem-msg" class="hidden text-xs p-3 rounded-xl border"></div>
+                </div>
+
+                <!-- Info Pembelian Payhip -->
                 <div class="max-w-md mx-auto p-6 bg-[#10111a] rounded-2xl border border-amber-500/40 text-center space-y-4">
                     <div class="mx-auto w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                        <i data-lucide="scan-line" class="w-7 h-7 text-amber-400"></i>
+                        <i data-lucide="shopping-bag" class="w-7 h-7 text-amber-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white">Imbasan Tambahan Dikunci</h3>
-                    <p class="text-xs text-gray-400">Untuk mendapatkan imbasan tambahan, buka Safari dan taip alamat kedai rasmi LotusCyber di bawah. Tiada pembayaran dibuat di dalam aplikasi.</p>
-                    <div class="w-full rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 space-y-2" aria-label="Maklumat kedai rasmi, teks sahaja">
-                        <p class="text-amber-300 font-bold text-sm">Dapatkan di kedai Rasmi</p>
-                        <p class="text-xs text-gray-200 break-all select-all">https://payhip.com/b/kSQUN</p>
-                        <p class="text-[10px] text-gray-400">Salin alamat ini dan tampal pada ruangan alamat Safari. Teks ini bukan butang atau pautan.</p>
+                    <h3 class="text-lg font-bold text-white">Pembelian Single Scan (RM9.90)</h3>
+                    <p class="text-xs text-gray-400">
+                        Dapatkan satu kod lesen imbasan melalui kedai rasmi LotusCyber di Payhip. Pembayaran selamat disediakan melalui PayPal/Kad di portal rasmi.
+                    </p>
+                    <div class="w-full rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 space-y-2 text-left">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-300">Produk:</span>
+                            <span class="text-white font-semibold">LotusCyber Single Scan</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-300">Product Key:</span>
+                            <span class="text-amber-300 font-mono font-bold">kSQUN</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-300">Harga:</span>
+                            <span class="text-[#00d2ff] font-bold">RM9.90 / imbasan</span>
+                        </div>
+                        <div class="pt-2 border-t border-amber-500/20 text-center">
+                            <p class="text-[11px] text-gray-200 font-mono select-all break-all">https://payhip.com/b/kSQUN</p>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-gray-500">Pembelian dan urusan produk dilakukan di kedai Payhip.</p>
+
+                    <a href="https://payhip.com/b/kSQUN" target="_blank" rel="noopener noreferrer"
+                        class="w-full py-3 px-4 rounded-xl bg-amber-500 text-black font-bold text-xs tracking-wider uppercase hover:bg-amber-400 active:scale-[0.99] transition flex items-center justify-center gap-2">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        Buka Kedai Rasmi Payhip (RM9.90)
+                    </a>
+                    <p class="text-[10px] text-gray-500">Tiada langganan berulang. Tiada caj tersembunyi.</p>
                 </div>
 
-                <div class="text-xs text-cyan-100 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 text-center">
-                    Setiap pembelian melalui Payhip adalah untuk satu imbasan tambahan. Pengaktifan imbasan selepas pembelian memerlukan pengesahan pembayaran oleh backend.
+                <div class="text-xs text-cyan-100 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 text-center max-w-xl mx-auto">
+                    Kredit imbasan hanya ditolak daripada akaun anda apabila imbasan mesej berjaya dilakukan oleh sistem.
                 </div>
             </div>
         </div>
@@ -514,7 +573,9 @@
         let appState = {
             activePlan: 'FREE',
             isOwner: false,
-            ownerToken: sessionStorage.getItem('lotus_owner_token') || ''
+            ownerToken: sessionStorage.getItem('lotus_owner_token') || '',
+            creditToken: localStorage.getItem('lotus_credit_token') || '',
+            credits: 0
         };
 
         let currentAnalysisResult = null;
@@ -542,6 +603,7 @@
             loadHistoryDisplay();
             loadCommunityFeedDisplay();
             updateExportButtonsUI();
+            refreshCreditBalance();
 
             // PWA Service Worker Registration
             if ('serviceWorker' in navigator) {
@@ -588,7 +650,90 @@
             if (modal) modal.classList.toggle('hidden');
         }
 
-        // Owner scans are unlimited only while a valid server-issued OWNER token is active.
+        // Helper to check and synchronize paid credits
+        async function refreshCreditBalance() {
+            const display = document.getElementById('credit-balance-display');
+            if (appState.isOwner) {
+                if (display) display.innerText = 'UNLIMITED (OWNER)';
+                return;
+            }
+            if (!appState.creditToken) {
+                appState.credits = 0;
+                if (display) display.innerText = '0 Kredit';
+                return;
+            }
+            try {
+                const response = await fetch('/api/scan/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ creditToken: appState.creditToken })
+                });
+                const data = await response.json();
+                if (response.ok && typeof data.credits === 'number') {
+                    appState.credits = data.credits;
+                    if (display) display.innerText = `${data.credits} Kredit`;
+                } else {
+                    appState.credits = 0;
+                    if (display) display.innerText = '0 Kredit';
+                }
+            } catch (err) {
+                if (display) display.innerText = `${appState.credits} Kredit`;
+            }
+        }
+
+        // Redeem Payhip License
+        async function redeemPayhipLicense() {
+            const input = document.getElementById('payhip-license-input');
+            const msg = document.getElementById('license-redeem-msg');
+            const btn = document.getElementById('redeem-license-btn');
+            const licenseKey = input ? input.value.trim() : '';
+
+            if (!licenseKey) {
+                alert('Sila masukkan kod lesen Payhip anda.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Sedang Mengesahkan...`;
+            msg.className = 'hidden text-xs p-3 rounded-xl border';
+
+            try {
+                const response = await fetch('/api/payhip/redeem', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        licenseKey,
+                        creditToken: appState.creditToken
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.status === 'ok') {
+                    appState.creditToken = data.creditToken;
+                    appState.credits = data.credits;
+                    localStorage.setItem('lotus_credit_token', data.creditToken);
+                    input.value = '';
+
+                    msg.innerText = data.message || 'Lesen berjaya ditebus! 1 kredit imbasan telah ditambah.';
+                    msg.className = 'text-xs p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 block';
+                    refreshCreditBalance();
+                } else {
+                    msg.innerText = data.message || 'Penebusan lesen gagal. Sila semak semula kod anda.';
+                    msg.className = 'text-xs p-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 block';
+                }
+            } catch (error) {
+                msg.innerText = 'Tidak dapat berhubung dengan pelayan. Sila pastikan sambungan internet stabil.';
+                msg.className = 'text-xs p-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Tebus Lesen & Tambah Kredit`;
+                lucide.createIcons();
+            }
+        }
+
+        // Owner scans are unlimited while owner session is active.
+        // Free user gets 1 free scan. Subsequent scans require a valid paid credit.
+        // Credit is ONLY deducted after a successful scan.
         async function analyzeMessage() {
             const ownerAuthorized = await verifyOwnerSession();
             const text = document.getElementById('message-input').value.trim();
@@ -596,10 +741,19 @@
                 alert('Sila masukkan atau tampal mesej terlebih dahulu.');
                 return;
             }
-            if (!ownerAuthorized && localStorage.getItem('lotus_free_scan_used') === '1') {
-                alert('Imbasan percuma anda telah digunakan. Anda boleh membeli satu imbasan tambahan melalui Payhip.');
-                switchTab('pricing');
-                return;
+
+            const freeScanUsed = localStorage.getItem('lotus_free_scan_used') === '1';
+            let usingPaidCredit = false;
+
+            if (!ownerAuthorized && freeScanUsed) {
+                // Must have a valid credit
+                await refreshCreditBalance();
+                if (appState.credits <= 0 || !appState.creditToken) {
+                    alert('Imbasan percuma anda telah digunakan. Sila tebus kod lesen Payhip (RM9.90) untuk meneruskan imbasan.');
+                    switchTab('pricing');
+                    return;
+                }
+                usingPaidCredit = true;
             }
 
             let totalScore = 0;
@@ -729,7 +883,30 @@
             };
 
             saveToHistory(currentAnalysisResult);
-            if (!ownerAuthorized) localStorage.setItem('lotus_free_scan_used', '1');
+
+            if (!ownerAuthorized) {
+                if (!freeScanUsed) {
+                    localStorage.setItem('lotus_free_scan_used', '1');
+                } else if (usingPaidCredit && appState.creditToken) {
+                    // Deduct credit on backend only AFTER scan succeeds
+                    try {
+                        const consumeRes = await fetch('/api/scan/consume', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ creditToken: appState.creditToken })
+                        });
+                        const consumeData = await consumeRes.json();
+                        if (consumeRes.ok && consumeData.creditToken) {
+                            appState.creditToken = consumeData.creditToken;
+                            appState.credits = consumeData.remainingCredits;
+                            localStorage.setItem('lotus_credit_token', consumeData.creditToken);
+                            refreshCreditBalance();
+                        }
+                    } catch (e) {
+                        console.error('Failed to update credit usage:', e);
+                    }
+                }
+            }
         }
 
         // OWNER authentication: passphrase is checked by the backend and never embedded in this page.

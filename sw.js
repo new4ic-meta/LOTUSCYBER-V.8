@@ -1,21 +1,21 @@
-const CACHE_NAME = ‘lotuscyber-pwa-v5’;
+const CACHE_NAME = 'lotuscyber-pwa-v5';
 
 const APP_ASSETS = [
-‘./’,
-‘./index.html’,
-‘./manifest.json’,
-‘./icon-192.png’,
-‘./icon-512.png’
+'./',
+'./index.html',
+'./manifest.json',
+'./icon-192.png',
+'./icon-512.png'
 ];
 
 const CDN_ASSETS = [
-‘https://cdn.tailwindcss.com’,
-‘https://unpkg.com/lucide@latest’,
-‘https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js’
+'https://cdn.tailwindcss.com',
+'https://unpkg.com/lucide@latest',
+'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
 // INSTALL
-self.addEventListener(‘install’, (event) => {
+self.addEventListener('install', (event) => {
 event.waitUntil(
 (async () => {
 const cache = await caches.open(CACHE_NAME);
@@ -36,7 +36,7 @@ const cache = await caches.open(CACHE_NAME);
 });
 
 // ACTIVATE
-self.addEventListener(‘activate’, (event) => {
+self.addEventListener('activate', (event) => {
 event.waitUntil(
 (async () => {
 const keys = await caches.keys();
@@ -53,15 +53,15 @@ const keys = await caches.keys();
 });
 
 // FETCH
-self.addEventListener(‘fetch’, (event) => {
+self.addEventListener('fetch', (event) => {
 const request = event.request;
 
-if (request.method !== ‘GET’) return;
+if (request.method !== 'GET') return;
 
 const url = new URL(request.url);
 
 // API mesti menggunakan rangkaian, bukan cache.
-if (url.pathname.startsWith(’/api/’)) return;
+if (url.pathname.startsWith('/api/')) return;
 
 event.respondWith(
 (async () => {
