@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const app = express();
 
@@ -42,15 +43,58 @@ function isOwnerRequest(req) {
   return authorization.startsWith('Bearer ') && verifyOwnerToken(authorization.slice(7));
 }
 
-// Payhip Single Scan configuration
+// Payhip Single Scan configuration (declared once)
 const PAYHIP_PRODUCT_SECRET_KEY = process.env.PAYHIP_PRODUCT_SECRET_KEY || '';
 const PAYHIP_PRODUCT_LINK = process.env.PAYHIP_PRODUCT_LINK || 'kSQUN';
 
-// Credit Token signing secret: server-held secret (uses env var or random per process runtime)
-const CREDIT_SECRET = process.env.CREDIT_SECRET || crypto.randomBytes(32).toString('hex');
-const redeemedLicenses = new Set();
+// Stable server signing secret (persists across restarts via env var or file storage)
+function getStableSecret() {
+  if (process.env.CREDIT_SECRET) return process.env.CREDIT_SECRET;
+  if (process.env.PAYHIP_PRODUCT_SECRET_KEY) return process.env.PAYHIP_PRODUCT_SECRET_KEY;
+  const secretFile = path.join(ROOT, '.credit_secret');
+  try {
+    if (fs.existsSync(secretFile)) {
+      return fs.readFileSync(secretFile, 'utf8').trim();
+    }
+    const generated = crypto.randomBytes(32).toString('hex');
+    fs.writeFileSync(secretFile, generated, { encoding: 'utf8', mode: 0o600 });
+    return generated;
+  } catch {
+    return 'lotuscyber_default_scan_secret_key_v8';
+  }
+}
+
+const CREDIT_SECRET = getStableSecret();
 const singleScanLocks = new Set();
-const consumedCreditNonces = new Set();
+
+// Persistent storage for redeemed licenses and consumed credit nonces
+const DATA_FILE = path.join(ROOT, '.credit_state.json');
+let creditState = { redeemedLicenses: [], consumedNonces: [] };
+
+try {
+  if (fs.existsSync(DATA_FILE)) {
+    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (Array.isArray(parsed.redeemedLicenses)) creditState.redeemedLicenses = parsed.redeemedLicenses;
+    if (Array.isArray(parsed.consumedNonces)) creditState.consumedNonces = parsed.consumedNonces;
+  }
+} catch (e) {
+  console.warn('Could not load persistent credit state, using memory:', e.message);
+}
+
+const redeemedLicenses = new Set(creditState.redeemedLicenses);
+const consumedCreditNonces = new Set(creditState.consumedNonces);
+
+function persistCreditState() {
+  try {
+    const data = {
+      redeemedLicenses: Array.from(redeemedLicenses),
+      consumedNonces: Array.from(consumedCreditNonces)
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data), { encoding: 'utf8', mode: 0o600 });
+  } catch (e) {
+    console.warn('Could not persist credit state:', e.message);
+  }
+}
 
 function signCreditToken(payload) {
   const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
@@ -151,6 +195,7 @@ app.post('/api/payhip/redeem', async (req, res) => {
 
     if (Number(license.uses) >= 1) {
       redeemedLicenses.add(licenseKey);
+      persistCreditState();
       return res.status(409).json({ status: 'used', message: 'Fail akses ini telah digunakan. Satu pembelian hanya sah untuk satu semakan.' });
     }
 
@@ -170,6 +215,7 @@ app.post('/api/payhip/redeem', async (req, res) => {
     }
 
     redeemedLicenses.add(licenseKey);
+    persistCreditState();
 
     let existingCredits = 0;
     const existingToken = req.body?.creditToken;
@@ -222,6 +268,8 @@ app.post('/api/scan/consume', (req, res) => {
   }
 
   consumedCreditNonces.add(payload.nonce);
+  persistCreditState();
+
   const remainingCredits = payload.credits - 1;
   const nextPayload = {
     sub: 'credit_session',
@@ -288,6 +336,7 @@ app.post('/api/payhip/consume-single-scan', async (req, res) => {
     }
     if (Number(license.uses) >= 1) {
       redeemedLicenses.add(licenseKey);
+      persistCreditState();
       return res.status(409).json({ status: 'used', message: 'Fail akses ini telah digunakan. Satu fail hanya sah untuk satu semakan.' });
     }
 
@@ -302,6 +351,7 @@ app.post('/api/payhip/consume-single-scan', async (req, res) => {
       throw new Error('Payhip did not confirm license usage update');
     }
     redeemedLicenses.add(licenseKey);
+    persistCreditState();
     return res.json({ status: 'ok', message: 'Fail akses disahkan. Satu semakan telah digunakan.' });
   } catch (error) {
     console.error('[PAYHIP_SINGLE_SCAN]', error.message);
