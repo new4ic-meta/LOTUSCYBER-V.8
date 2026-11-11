@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: false, limit: '32kb' }));
 
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = __dirname;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 // OWNER access is protected by a Render environment variable; never store the passphrase in source code.
 const ownerPassphrase = process.env.OWNER_PASSPHRASE || '';
@@ -47,20 +48,18 @@ function isOwnerRequest(req) {
 const PAYHIP_PRODUCT_SECRET_KEY = process.env.PAYHIP_PRODUCT_SECRET_KEY || '';
 const PAYHIP_PRODUCT_LINK = process.env.PAYHIP_PRODUCT_LINK || 'kSQUN';
 
-// Exactly one declaration of concurrency locks
+// Exactly one declaration of in-flight concurrency locks
 const singleScanLocks = new Set();
 
 // CREDIT_SECRET: Stable server secret from Render environment variable.
 // In production, fails safely if required secret is missing. Never generates random production secret on startup.
-const IS_PROD = process.env.NODE_ENV === 'production';
 const CREDIT_SECRET = process.env.CREDIT_SECRET || process.env.PAYHIP_PRODUCT_SECRET_KEY || (!IS_PROD ? 'lotuscyber_dev_credit_secret_key_v8' : '');
 
 function isCreditConfigured() {
   return Boolean(CREDIT_SECRET);
 }
 
-// Optional PostgreSQL integration if DATABASE_URL or PG* variables are provided on Render.
-// If PostgreSQL is not configured, safely persists using local atomic file storage.
+// PostgreSQL integration: Mandatory for persistent storage in production via DATABASE_URL
 let pgPool = null;
 const DATABASE_URL = process.env.DATABASE_URL || process.env.PG_CONNECTION_STRING || '';
 
@@ -71,7 +70,7 @@ if (DATABASE_URL) {
       connectionString: DATABASE_URL,
       ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false }
     });
-    // Create tables if not exist
+    // Create tables atomically if not exists
     pgPool.query(`
       CREATE TABLE IF NOT EXISTS lotus_redeemed_licenses (
         license_key VARCHAR(120) PRIMARY KEY,
@@ -82,96 +81,89 @@ if (DATABASE_URL) {
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `).catch(err => console.warn('[PG_INIT_WARN]', err.message));
-  } catch {
+  } catch (err) {
+    console.error('[PG_INIT_ERR]', err.message);
     pgPool = null;
   }
 }
 
-// Fallback persistent atomic file storage
-const DATA_FILE = path.join(ROOT, '.credit_state.json');
-let creditState = { redeemedLicenses: [], consumedNonces: [] };
+// In-memory cache for development mode or non-production fallback
+const devRedeemedLicenses = new Set();
+const devConsumedCreditNonces = new Set();
 
-try {
-  if (fs.existsSync(DATA_FILE)) {
-    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    if (Array.isArray(parsed.redeemedLicenses)) creditState.redeemedLicenses = parsed.redeemedLicenses;
-    if (Array.isArray(parsed.consumedNonces)) creditState.consumedNonces = parsed.consumedNonces;
+function isStorageAvailable() {
+  if (IS_PROD) {
+    return Boolean(pgPool);
   }
-} catch (e) {
-  console.warn('Could not read credit state file:', e.message);
-}
-
-const redeemedLicenses = new Set(creditState.redeemedLicenses);
-const consumedCreditNonces = new Set(creditState.consumedNonces);
-
-function persistCreditState() {
-  try {
-    const data = {
-      redeemedLicenses: Array.from(redeemedLicenses),
-      consumedNonces: Array.from(consumedCreditNonces)
-    };
-    const tmp = `${DATA_FILE}.tmp.${Date.now()}`;
-    fs.writeFileSync(tmp, JSON.stringify(data), { encoding: 'utf8', mode: 0o600 });
-    fs.renameSync(tmp, DATA_FILE);
-  } catch (e) {
-    console.warn('Could not persist credit state:', e.message);
-  }
+  return true;
 }
 
 async function isLicenseRedeemed(licenseKey) {
-  if (redeemedLicenses.has(licenseKey)) return true;
   if (pgPool) {
-    try {
-      const res = await pgPool.query('SELECT 1 FROM lotus_redeemed_licenses WHERE license_key = $1 LIMIT 1', [licenseKey]);
-      if (res.rowCount > 0) {
-        redeemedLicenses.add(licenseKey);
-        return true;
-      }
-    } catch (e) {
-      console.warn('[PG_QUERY]', e.message);
-    }
+    const res = await pgPool.query('SELECT 1 FROM lotus_redeemed_licenses WHERE license_key = $1 LIMIT 1', [licenseKey]);
+    return res.rowCount > 0;
   }
-  return false;
+  if (IS_PROD) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+  return devRedeemedLicenses.has(licenseKey);
 }
 
 async function markLicenseRedeemed(licenseKey) {
-  redeemedLicenses.add(licenseKey);
-  persistCreditState();
   if (pgPool) {
+    const client = await pgPool.connect();
     try {
-      await pgPool.query('INSERT INTO lotus_redeemed_licenses (license_key) VALUES ($1) ON CONFLICT DO NOTHING', [licenseKey]);
-    } catch (e) {
-      console.warn('[PG_INSERT]', e.message);
+      await client.query('BEGIN');
+      const res = await client.query('INSERT INTO lotus_redeemed_licenses (license_key) VALUES ($1) ON CONFLICT DO NOTHING RETURNING license_key', [licenseKey]);
+      await client.query('COMMIT');
+      return res.rowCount > 0;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
   }
+  if (IS_PROD) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+  if (devRedeemedLicenses.has(licenseKey)) return false;
+  devRedeemedLicenses.add(licenseKey);
+  return true;
 }
 
 async function isNonceConsumed(nonce) {
-  if (consumedCreditNonces.has(nonce)) return true;
   if (pgPool) {
-    try {
-      const res = await pgPool.query('SELECT 1 FROM lotus_consumed_nonces WHERE nonce = $1 LIMIT 1', [nonce]);
-      if (res.rowCount > 0) {
-        consumedCreditNonces.add(nonce);
-        return true;
-      }
-    } catch (e) {
-      console.warn('[PG_QUERY]', e.message);
-    }
+    const res = await pgPool.query('SELECT 1 FROM lotus_consumed_nonces WHERE nonce = $1 LIMIT 1', [nonce]);
+    return res.rowCount > 0;
   }
-  return false;
+  if (IS_PROD) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+  return devConsumedCreditNonces.has(nonce);
 }
 
 async function markNonceConsumed(nonce) {
-  consumedCreditNonces.add(nonce);
-  persistCreditState();
   if (pgPool) {
+    const client = await pgPool.connect();
     try {
-      await pgPool.query('INSERT INTO lotus_consumed_nonces (nonce) VALUES ($1) ON CONFLICT DO NOTHING', [nonce]);
-    } catch (e) {
-      console.warn('[PG_INSERT]', e.message);
+      await client.query('BEGIN');
+      const res = await client.query('INSERT INTO lotus_consumed_nonces (nonce) VALUES ($1) ON CONFLICT DO NOTHING RETURNING nonce', [nonce]);
+      await client.query('COMMIT');
+      return res.rowCount > 0;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
   }
+  if (IS_PROD) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+  if (devConsumedCreditNonces.has(nonce)) return false;
+  devConsumedCreditNonces.add(nonce);
+  return true;
 }
 
 function signCreditToken(payload) {
@@ -201,11 +193,12 @@ app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
     service: 'LotusCyber API',
+    environment: IS_PROD ? 'production' : 'development',
     payments: PAYHIP_PRODUCT_SECRET_KEY ? 'payhip_license_verification_configured' : 'not_configured',
     creditSecurity: isCreditConfigured() ? 'credit_secret_configured' : 'credit_secret_missing',
+    database: pgPool ? 'postgresql' : (IS_PROD ? 'unavailable' : 'dev_memory'),
     singleScan: 'one_use_license',
-    productLink: PAYHIP_PRODUCT_LINK,
-    database: pgPool ? 'postgresql' : 'file_persistence'
+    productLink: PAYHIP_PRODUCT_LINK
   });
 });
 
@@ -241,6 +234,9 @@ app.get('/api/owner/status', (req, res) => {
 // 2. Marks usage on Payhip
 // 3. Issues cryptographically signed scan credit token
 app.post('/api/payhip/redeem', async (req, res) => {
+  if (IS_PROD && !pgPool) {
+    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data pengeluaran (DATABASE_URL) tidak tersedia.' });
+  }
   if (!isCreditConfigured()) {
     return res.status(503).json({ status: 'unavailable', message: 'Pengurusan kredit belum dikonfigurasi dengan selamat pada pelayan (CREDIT_SECRET diperlukan).' });
   }
@@ -254,8 +250,13 @@ app.post('/api/payhip/redeem', async (req, res) => {
   if (singleScanLocks.has(licenseKey)) {
     return res.status(409).json({ status: 'error', message: 'Kod lesen sedang diproses. Sila tunggu sebentar.' });
   }
-  if (await isLicenseRedeemed(licenseKey)) {
-    return res.status(409).json({ status: 'used', message: 'Kod lesen ini telah ditebus sebelum ini.' });
+
+  try {
+    if (await isLicenseRedeemed(licenseKey)) {
+      return res.status(409).json({ status: 'used', message: 'Kod lesen ini telah ditebus sebelum ini.' });
+    }
+  } catch (err) {
+    return res.status(500).json({ status: 'error', message: 'Ralat semakan pangkalan data.' });
   }
 
   singleScanLocks.add(licenseKey);
@@ -297,7 +298,10 @@ app.post('/api/payhip/redeem', async (req, res) => {
       throw new Error('Payhip did not confirm license usage update');
     }
 
-    await markLicenseRedeemed(licenseKey);
+    const recorded = await markLicenseRedeemed(licenseKey);
+    if (!recorded) {
+      return res.status(409).json({ status: 'used', message: 'Kod lesen ini telah ditebus sebelum ini.' });
+    }
 
     let existingCredits = 0;
     const existingToken = req.body?.creditToken;
@@ -339,6 +343,10 @@ app.post('/api/scan/consume', async (req, res) => {
     return res.json({ status: 'ok', owner: true, credits: Infinity });
   }
 
+  if (IS_PROD && !pgPool) {
+    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data pengeluaran (DATABASE_URL) tidak tersedia.' });
+  }
+
   if (!isCreditConfigured()) {
     return res.status(503).json({ status: 'unavailable', message: 'Sistem pengesahan kredit belum dikonfigurasi.' });
   }
@@ -349,11 +357,18 @@ app.post('/api/scan/consume', async (req, res) => {
     return res.status(403).json({ status: 'no_credit', message: 'Tiada baki kredit imbasan yang sah.' });
   }
 
-  if (await isNonceConsumed(payload.nonce)) {
-    return res.status(409).json({ status: 'conflict', message: 'Kredit ini telah digunakan atau dikemas kini.' });
-  }
+  try {
+    if (await isNonceConsumed(payload.nonce)) {
+      return res.status(409).json({ status: 'conflict', message: 'Kredit ini telah digunakan atau dikemas kini.' });
+    }
 
-  await markNonceConsumed(payload.nonce);
+    const consumed = await markNonceConsumed(payload.nonce);
+    if (!consumed) {
+      return res.status(409).json({ status: 'conflict', message: 'Kredit ini telah digunakan atau dikemas kini.' });
+    }
+  } catch (err) {
+    return res.status(500).json({ status: 'error', message: 'Ralat transaksi kredit.' });
+  }
 
   const remainingCredits = payload.credits - 1;
   const nextPayload = {
@@ -408,6 +423,9 @@ app.post('/api/payhip/webhook', async (req, res) => {
 
 // Legacy backward-compatible endpoint
 app.post('/api/payhip/consume-single-scan', async (req, res) => {
+  if (IS_PROD && !pgPool) {
+    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data pengeluaran (DATABASE_URL) tidak tersedia.' });
+  }
   const licenseKey = String(req.body?.licenseKey || '').trim();
   if (!PAYHIP_PRODUCT_SECRET_KEY) {
     return res.status(503).json({ status: 'unavailable', message: 'Pengesahan lesen Payhip belum dikonfigurasi pada pelayan.' });
@@ -486,12 +504,13 @@ module.exports = {
   app,
   signCreditToken,
   verifyCreditToken,
-  redeemedLicenses,
-  consumedCreditNonces,
+  devRedeemedLicenses,
+  devConsumedCreditNonces,
   singleScanLocks,
   isLicenseRedeemed,
   markLicenseRedeemed,
   isNonceConsumed,
   markNonceConsumed,
-  isCreditConfigured
+  isCreditConfigured,
+  isStorageAvailable
 };
