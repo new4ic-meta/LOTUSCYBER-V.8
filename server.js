@@ -53,7 +53,7 @@ const singleScanLocks = new Set();
 
 // CREDIT_SECRET: Stable server secret from Render environment variable.
 // In production, fails safely if required secret is missing. Never generates random production secret on startup.
-const CREDIT_SECRET = process.env.CREDIT_SECRET || process.env.PAYHIP_PRODUCT_SECRET_KEY || (!IS_PROD ? 'lotuscyber_dev_credit_secret_key_v8' : '');
+const CREDIT_SECRET = process.env.CREDIT_SECRET || (!IS_PROD ? 'lotuscyber_dev_credit_secret_key_v8' : '');
 
 function isCreditConfigured() {
   return Boolean(CREDIT_SECRET);
@@ -61,6 +61,7 @@ function isCreditConfigured() {
 
 // PostgreSQL integration: Mandatory for persistent storage in production via DATABASE_URL
 let pgPool = null;
+let databaseReady = Promise.resolve();
 const DATABASE_URL = process.env.DATABASE_URL || process.env.PG_CONNECTION_STRING || '';
 
 if (DATABASE_URL) {
@@ -70,21 +71,33 @@ if (DATABASE_URL) {
       connectionString: DATABASE_URL,
       ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false }
     });
-    // Create tables atomically if not exists
-    pgPool.query(`
-      CREATE TABLE IF NOT EXISTS lotus_redeemed_licenses (
-        license_key VARCHAR(120) PRIMARY KEY,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS lotus_consumed_nonces (
-        nonce VARCHAR(120) PRIMARY KEY,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      );
-    `).catch(err => console.warn('[PG_INIT_WARN]', err.message));
+    pgPool.on('error', err => console.error('[PG_POOL_ERROR]', err.message));
+    // Initialize each table separately and expose readiness to API routes.
+    databaseReady = (async () => {
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS lotus_redeemed_licenses (
+          license_key VARCHAR(120) PRIMARY KEY,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS lotus_consumed_nonces (
+          nonce VARCHAR(120) PRIMARY KEY,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+    })();
+    databaseReady.catch(err => console.error('[PG_INIT_ERR]', err.message));
   } catch (err) {
     console.error('[PG_INIT_ERR]', err.message);
     pgPool = null;
+    databaseReady = Promise.reject(err);
   }
+}
+
+async function ensureDatabaseReady() {
+  if (IS_PROD && !pgPool) throw new Error('DATABASE_URL is required in production');
+  if (pgPool) await databaseReady;
 }
 
 // In-memory cache for development mode or non-production fallback
@@ -183,8 +196,10 @@ function verifyCreditToken(token) {
   if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return null;
   try {
     const payload = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
-    if (typeof payload.credits !== 'number' || payload.credits < 0) return null;
-    if (payload.exp && Date.now() > payload.exp) return null;
+    if (payload.sub !== 'credit_session' ||
+        !Number.isSafeInteger(payload.credits) || payload.credits < 0 ||
+        typeof payload.nonce !== 'string' || !/^[a-f0-9]{32}$/.test(payload.nonce) ||
+        !Number.isFinite(payload.exp) || Date.now() > payload.exp) return null;
     return payload;
   } catch { return null; }
 }
@@ -234,8 +249,11 @@ app.get('/api/owner/status', (req, res) => {
 // 2. Marks usage on Payhip
 // 3. Issues cryptographically signed scan credit token
 app.post('/api/payhip/redeem', async (req, res) => {
-  if (IS_PROD && !pgPool) {
-    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data pengeluaran (DATABASE_URL) tidak tersedia.' });
+  try {
+    await ensureDatabaseReady();
+  } catch (err) {
+    console.error('[DATABASE_NOT_READY]', err.message);
+    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data belum tersedia. Sila cuba sebentar lagi.' });
   }
   if (!isCreditConfigured()) {
     return res.status(503).json({ status: 'unavailable', message: 'Pengurusan kredit belum dikonfigurasi dengan selamat pada pelayan (CREDIT_SECRET diperlukan).' });
@@ -307,9 +325,13 @@ app.post('/api/payhip/redeem', async (req, res) => {
     const existingToken = req.body?.creditToken;
     if (existingToken) {
       const parsed = verifyCreditToken(existingToken);
-      if (parsed && typeof parsed.credits === 'number') {
-        existingCredits = parsed.credits;
+      if (!parsed) {
+        return res.status(409).json({ status: 'conflict', message: 'Sesi kredit lama tidak sah atau telah tamat. Sila muat semula baki kredit sebelum menebus lesen.' });
       }
+      if (await isNonceConsumed(parsed.nonce)) {
+        return res.status(409).json({ status: 'conflict', message: 'Sesi kredit lama telah digunakan. Sila muat semula baki kredit sebelum menebus lesen.' });
+      }
+      existingCredits = parsed.credits;
     }
 
     const newCredits = existingCredits + 1;
@@ -343,8 +365,11 @@ app.post('/api/scan/consume', async (req, res) => {
     return res.json({ status: 'ok', owner: true, credits: Infinity });
   }
 
-  if (IS_PROD && !pgPool) {
-    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data pengeluaran (DATABASE_URL) tidak tersedia.' });
+  try {
+    await ensureDatabaseReady();
+  } catch (err) {
+    console.error('[DATABASE_NOT_READY]', err.message);
+    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data belum tersedia. Sila cuba sebentar lagi.' });
   }
 
   if (!isCreditConfigured()) {
@@ -404,6 +429,7 @@ app.post('/api/scan/balance', (req, res) => {
 // Payhip Webhook endpoint (preserves webhook payment / refund handling)
 app.post('/api/payhip/webhook', async (req, res) => {
   try {
+    await ensureDatabaseReady();
     const event = req.body;
     const eventType = event?.event_type || event?.type || '';
     const licenseKey = event?.license_key || event?.data?.license_key;
@@ -423,8 +449,11 @@ app.post('/api/payhip/webhook', async (req, res) => {
 
 // Legacy backward-compatible endpoint
 app.post('/api/payhip/consume-single-scan', async (req, res) => {
-  if (IS_PROD && !pgPool) {
-    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data pengeluaran (DATABASE_URL) tidak tersedia.' });
+  try {
+    await ensureDatabaseReady();
+  } catch (err) {
+    console.error('[DATABASE_NOT_READY]', err.message);
+    return res.status(503).json({ status: 'unavailable', message: 'Pangkalan data belum tersedia. Sila cuba sebentar lagi.' });
   }
   const licenseKey = String(req.body?.licenseKey || '').trim();
   if (!PAYHIP_PRODUCT_SECRET_KEY) {
