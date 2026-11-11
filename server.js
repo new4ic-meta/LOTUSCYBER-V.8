@@ -43,31 +43,51 @@ function isOwnerRequest(req) {
   return authorization.startsWith('Bearer ') && verifyOwnerToken(authorization.slice(7));
 }
 
-// Payhip Single Scan configuration (declared once)
+// Exactly one declaration of Payhip Single Scan configuration
 const PAYHIP_PRODUCT_SECRET_KEY = process.env.PAYHIP_PRODUCT_SECRET_KEY || '';
 const PAYHIP_PRODUCT_LINK = process.env.PAYHIP_PRODUCT_LINK || 'kSQUN';
 
-// Stable server signing secret (persists across restarts via env var or file storage)
-function getStableSecret() {
-  if (process.env.CREDIT_SECRET) return process.env.CREDIT_SECRET;
-  if (process.env.PAYHIP_PRODUCT_SECRET_KEY) return process.env.PAYHIP_PRODUCT_SECRET_KEY;
-  const secretFile = path.join(ROOT, '.credit_secret');
+// Exactly one declaration of concurrency locks
+const singleScanLocks = new Set();
+
+// CREDIT_SECRET: Stable server secret from Render environment variable.
+// In production, fails safely if required secret is missing. Never generates random production secret on startup.
+const IS_PROD = process.env.NODE_ENV === 'production';
+const CREDIT_SECRET = process.env.CREDIT_SECRET || process.env.PAYHIP_PRODUCT_SECRET_KEY || (!IS_PROD ? 'lotuscyber_dev_credit_secret_key_v8' : '');
+
+function isCreditConfigured() {
+  return Boolean(CREDIT_SECRET);
+}
+
+// Optional PostgreSQL integration if DATABASE_URL or PG* variables are provided on Render.
+// If PostgreSQL is not configured, safely persists using local atomic file storage.
+let pgPool = null;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.PG_CONNECTION_STRING || '';
+
+if (DATABASE_URL) {
   try {
-    if (fs.existsSync(secretFile)) {
-      return fs.readFileSync(secretFile, 'utf8').trim();
-    }
-    const generated = crypto.randomBytes(32).toString('hex');
-    fs.writeFileSync(secretFile, generated, { encoding: 'utf8', mode: 0o600 });
-    return generated;
+    const { Pool } = require('pg');
+    pgPool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false }
+    });
+    // Create tables if not exist
+    pgPool.query(`
+      CREATE TABLE IF NOT EXISTS lotus_redeemed_licenses (
+        license_key VARCHAR(120) PRIMARY KEY,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS lotus_consumed_nonces (
+        nonce VARCHAR(120) PRIMARY KEY,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `).catch(err => console.warn('[PG_INIT_WARN]', err.message));
   } catch {
-    return 'lotuscyber_default_scan_secret_key_v8';
+    pgPool = null;
   }
 }
 
-const CREDIT_SECRET = getStableSecret();
-const singleScanLocks = new Set();
-
-// Persistent storage for redeemed licenses and consumed credit nonces
+// Fallback persistent atomic file storage
 const DATA_FILE = path.join(ROOT, '.credit_state.json');
 let creditState = { redeemedLicenses: [], consumedNonces: [] };
 
@@ -78,7 +98,7 @@ try {
     if (Array.isArray(parsed.consumedNonces)) creditState.consumedNonces = parsed.consumedNonces;
   }
 } catch (e) {
-  console.warn('Could not load persistent credit state, using memory:', e.message);
+  console.warn('Could not read credit state file:', e.message);
 }
 
 const redeemedLicenses = new Set(creditState.redeemedLicenses);
@@ -90,20 +110,79 @@ function persistCreditState() {
       redeemedLicenses: Array.from(redeemedLicenses),
       consumedNonces: Array.from(consumedCreditNonces)
     };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data), { encoding: 'utf8', mode: 0o600 });
+    const tmp = `${DATA_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tmp, JSON.stringify(data), { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(tmp, DATA_FILE);
   } catch (e) {
     console.warn('Could not persist credit state:', e.message);
   }
 }
 
+async function isLicenseRedeemed(licenseKey) {
+  if (redeemedLicenses.has(licenseKey)) return true;
+  if (pgPool) {
+    try {
+      const res = await pgPool.query('SELECT 1 FROM lotus_redeemed_licenses WHERE license_key = $1 LIMIT 1', [licenseKey]);
+      if (res.rowCount > 0) {
+        redeemedLicenses.add(licenseKey);
+        return true;
+      }
+    } catch (e) {
+      console.warn('[PG_QUERY]', e.message);
+    }
+  }
+  return false;
+}
+
+async function markLicenseRedeemed(licenseKey) {
+  redeemedLicenses.add(licenseKey);
+  persistCreditState();
+  if (pgPool) {
+    try {
+      await pgPool.query('INSERT INTO lotus_redeemed_licenses (license_key) VALUES ($1) ON CONFLICT DO NOTHING', [licenseKey]);
+    } catch (e) {
+      console.warn('[PG_INSERT]', e.message);
+    }
+  }
+}
+
+async function isNonceConsumed(nonce) {
+  if (consumedCreditNonces.has(nonce)) return true;
+  if (pgPool) {
+    try {
+      const res = await pgPool.query('SELECT 1 FROM lotus_consumed_nonces WHERE nonce = $1 LIMIT 1', [nonce]);
+      if (res.rowCount > 0) {
+        consumedCreditNonces.add(nonce);
+        return true;
+      }
+    } catch (e) {
+      console.warn('[PG_QUERY]', e.message);
+    }
+  }
+  return false;
+}
+
+async function markNonceConsumed(nonce) {
+  consumedCreditNonces.add(nonce);
+  persistCreditState();
+  if (pgPool) {
+    try {
+      await pgPool.query('INSERT INTO lotus_consumed_nonces (nonce) VALUES ($1) ON CONFLICT DO NOTHING', [nonce]);
+    } catch (e) {
+      console.warn('[PG_INSERT]', e.message);
+    }
+  }
+}
+
 function signCreditToken(payload) {
+  if (!CREDIT_SECRET) throw new Error('CREDIT_SECRET not configured');
   const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signature = crypto.createHmac('sha256', CREDIT_SECRET).update(encoded).digest('base64url');
   return `${encoded}.${signature}`;
 }
 
 function verifyCreditToken(token) {
-  if (!token || typeof token !== 'string') return null;
+  if (!CREDIT_SECRET || !token || typeof token !== 'string') return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;
   const expected = crypto.createHmac('sha256', CREDIT_SECRET).update(parts[0]).digest();
@@ -123,8 +202,10 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     service: 'LotusCyber API',
     payments: PAYHIP_PRODUCT_SECRET_KEY ? 'payhip_license_verification_configured' : 'not_configured',
+    creditSecurity: isCreditConfigured() ? 'credit_secret_configured' : 'credit_secret_missing',
     singleScan: 'one_use_license',
-    productLink: PAYHIP_PRODUCT_LINK
+    productLink: PAYHIP_PRODUCT_LINK,
+    database: pgPool ? 'postgresql' : 'file_persistence'
   });
 });
 
@@ -160,6 +241,9 @@ app.get('/api/owner/status', (req, res) => {
 // 2. Marks usage on Payhip
 // 3. Issues cryptographically signed scan credit token
 app.post('/api/payhip/redeem', async (req, res) => {
+  if (!isCreditConfigured()) {
+    return res.status(503).json({ status: 'unavailable', message: 'Pengurusan kredit belum dikonfigurasi dengan selamat pada pelayan (CREDIT_SECRET diperlukan).' });
+  }
   const licenseKey = String(req.body?.licenseKey || '').trim();
   if (!PAYHIP_PRODUCT_SECRET_KEY) {
     return res.status(503).json({ status: 'unavailable', message: 'Pengesahan lesen Payhip belum dikonfigurasi pada pelayan.' });
@@ -170,7 +254,7 @@ app.post('/api/payhip/redeem', async (req, res) => {
   if (singleScanLocks.has(licenseKey)) {
     return res.status(409).json({ status: 'error', message: 'Kod lesen sedang diproses. Sila tunggu sebentar.' });
   }
-  if (redeemedLicenses.has(licenseKey)) {
+  if (await isLicenseRedeemed(licenseKey)) {
     return res.status(409).json({ status: 'used', message: 'Kod lesen ini telah ditebus sebelum ini.' });
   }
 
@@ -194,8 +278,7 @@ app.post('/api/payhip/redeem', async (req, res) => {
     }
 
     if (Number(license.uses) >= 1) {
-      redeemedLicenses.add(licenseKey);
-      persistCreditState();
+      await markLicenseRedeemed(licenseKey);
       return res.status(409).json({ status: 'used', message: 'Fail akses ini telah digunakan. Satu pembelian hanya sah untuk satu semakan.' });
     }
 
@@ -214,8 +297,7 @@ app.post('/api/payhip/redeem', async (req, res) => {
       throw new Error('Payhip did not confirm license usage update');
     }
 
-    redeemedLicenses.add(licenseKey);
-    persistCreditState();
+    await markLicenseRedeemed(licenseKey);
 
     let existingCredits = 0;
     const existingToken = req.body?.creditToken;
@@ -252,9 +334,13 @@ app.post('/api/payhip/redeem', async (req, res) => {
 
 // Scan Credit Consumption Endpoint:
 // Deducts 1 credit only when an authorized scan has succeeded.
-app.post('/api/scan/consume', (req, res) => {
+app.post('/api/scan/consume', async (req, res) => {
   if (isOwnerRequest(req)) {
     return res.json({ status: 'ok', owner: true, credits: Infinity });
+  }
+
+  if (!isCreditConfigured()) {
+    return res.status(503).json({ status: 'unavailable', message: 'Sistem pengesahan kredit belum dikonfigurasi.' });
   }
 
   const token = req.body?.creditToken;
@@ -263,12 +349,11 @@ app.post('/api/scan/consume', (req, res) => {
     return res.status(403).json({ status: 'no_credit', message: 'Tiada baki kredit imbasan yang sah.' });
   }
 
-  if (consumedCreditNonces.has(payload.nonce)) {
+  if (await isNonceConsumed(payload.nonce)) {
     return res.status(409).json({ status: 'conflict', message: 'Kredit ini telah digunakan atau dikemas kini.' });
   }
 
-  consumedCreditNonces.add(payload.nonce);
-  persistCreditState();
+  await markNonceConsumed(payload.nonce);
 
   const remainingCredits = payload.credits - 1;
   const nextPayload = {
@@ -301,6 +386,26 @@ app.post('/api/scan/balance', (req, res) => {
   return res.json({ status: 'ok', credits: payload.credits });
 });
 
+// Payhip Webhook endpoint (preserves webhook payment / refund handling)
+app.post('/api/payhip/webhook', async (req, res) => {
+  try {
+    const event = req.body;
+    const eventType = event?.event_type || event?.type || '';
+    const licenseKey = event?.license_key || event?.data?.license_key;
+
+    if (eventType === 'refund' || eventType === 'dispute') {
+      if (licenseKey) {
+        await markLicenseRedeemed(licenseKey); // Revoke further redemptions
+      }
+      return res.json({ status: 'ok', action: 'revoked' });
+    }
+
+    return res.json({ status: 'ok', received: true });
+  } catch (err) {
+    return res.status(400).json({ status: 'error', message: err.message });
+  }
+});
+
 // Legacy backward-compatible endpoint
 app.post('/api/payhip/consume-single-scan', async (req, res) => {
   const licenseKey = String(req.body?.licenseKey || '').trim();
@@ -313,7 +418,7 @@ app.post('/api/payhip/consume-single-scan', async (req, res) => {
   if (singleScanLocks.has(licenseKey)) {
     return res.status(409).json({ status: 'error', message: 'Kod lesen sedang diproses. Cuba sebentar lagi.' });
   }
-  if (redeemedLicenses.has(licenseKey)) {
+  if (await isLicenseRedeemed(licenseKey)) {
     return res.status(409).json({ status: 'used', message: 'Fail akses ini telah digunakan. Satu fail hanya sah untuk satu semakan.' });
   }
 
@@ -335,8 +440,7 @@ app.post('/api/payhip/consume-single-scan', async (req, res) => {
       return res.status(403).json({ status: 'error', message: 'Lesen ini bukan untuk produk LotusCyber Single Scan.' });
     }
     if (Number(license.uses) >= 1) {
-      redeemedLicenses.add(licenseKey);
-      persistCreditState();
+      await markLicenseRedeemed(licenseKey);
       return res.status(409).json({ status: 'used', message: 'Fail akses ini telah digunakan. Satu fail hanya sah untuk satu semakan.' });
     }
 
@@ -350,8 +454,7 @@ app.post('/api/payhip/consume-single-scan', async (req, res) => {
     if (!usageJson?.data || Number(usageJson.data.uses) < 1) {
       throw new Error('Payhip did not confirm license usage update');
     }
-    redeemedLicenses.add(licenseKey);
-    persistCreditState();
+    await markLicenseRedeemed(licenseKey);
     return res.json({ status: 'ok', message: 'Fail akses disahkan. Satu semakan telah digunakan.' });
   } catch (error) {
     console.error('[PAYHIP_SINGLE_SCAN]', error.message);
@@ -372,6 +475,7 @@ app.post('/api/v1/scan', (_req, res) => {
 app.use(express.static(ROOT, { index: 'index.html', etag: true, maxAge: '1h' }));
 app.get('*', (_req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 
+// Exactly ONE app.listen call
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`LotusCyber running on port ${PORT}`);
@@ -384,5 +488,10 @@ module.exports = {
   verifyCreditToken,
   redeemedLicenses,
   consumedCreditNonces,
-  singleScanLocks
+  singleScanLocks,
+  isLicenseRedeemed,
+  markLicenseRedeemed,
+  isNonceConsumed,
+  markNonceConsumed,
+  isCreditConfigured
 };
